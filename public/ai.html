@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Fly Dragon AI Chat</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+  }
+
+  /* Header */
+  .header {
+    padding: 14px 18px;
+    padding-top: max(14px, env(safe-area-inset-top));
+    background: #0a0a0a;
+    border-bottom: 1px solid #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .status {
+    font-size: 11px;
+    color: #00ff88;
+  }
+
+  /* Chat area */
+  .chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  .msg {
+    max-width: 85%;
+    padding: 12px 14px;
+    border-radius: 16px;
+    font-size: 15px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user {
+    align-self: flex-end;
+    background: #1a73e8;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.bot {
+    align-self: flex-start;
+    background: #1a1a1a;
+    color: #d0d0d0;
+    border: 1px solid #2a2a2a;
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg.thinking {
+    color: #555;
+    font-style: italic;
+  }
+
+  /* Input wrapper */
+  .input-wrapper {
+    flex-shrink: 0;
+    background: #0a0a0a;
+    border-top: 1px solid #1a1a1a;
+  }
+
+  .input-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  /* Input pill — contains attach + text + voice */
+  .input-pill {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 24px;
+    padding: 4px 4px 4px 4px;
+    min-height: 44px;
+    transition: border-color 0.15s;
+  }
+  .input-pill:focus-within {
+    border-color: #1a73e8;
+  }
+
+  /* Small icon buttons INSIDE the pill */
+  .pill-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #888;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.15s, background 0.15s;
+  }
+  .pill-btn:active {
+    background: #2a2a2a;
+    color: #fff;
+  }
+  .pill-btn.recording {
+    color: #e81a1a;
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Text input inside pill */
+  .input-pill input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 16px;
+    padding: 0 8px;
+    -webkit-appearance: none;
+    min-width: 0;
+  }
+  .input-pill input::placeholder {
+    color: #555;
+  }
+
+  /* Send button outside pill */
+  .send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #1a73e8;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s;
+  }
+  .send-btn:active {
+    opacity: 0.7;
+  }
+  .send-btn:disabled {
+    opacity: 0.3;
+  }
+
+  #file-input {
+    display: none;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Fly 👽 Dragon AI Chat</h1>
+  <span class="status" id="status">Login/Signup</span>
+</div>
+
+<div class="chat" id="chat"></div>
+
+<div class="input-wrapper" id="inputWrapper">
+  <div class="input-bar">
+    <!-- Pill container: attach + input + voice -->
+    <div class="input-pill">
+      <button class="pill-btn" id="attachBtn" title="Attach file">＋</button>
+      <input id="input" type="text" placeholder="Message..." autocomplete="off" enterkeyhint="send" spellcheck="true">
+      <button class="pill-btn" id="voiceBtn" title="Voice input">🎤</button>
+    </div>
+    <button class="send-btn" id="send">➤</button>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept="image/*,.pdf,.txt,.doc,.docx">
+
+<script>
+// ============================================================
+// CONFIGURATION
+// ============================================================
+const CONFIG = {
+  endpoint: "https://gateway.ai.cloudflare.com/v1/PASTE_ACCOUNT_ID_HERE/ai_dragon/openai/chat/completions",
+  apiKey: "PASTE_CLOUDFLARE_API_TOKEN_HERE",
+  model: "gpt-4o-mini",
+  useGateway: true,
+};
+
+// ============================================================
+// DOM
+// ============================================================
+const chat = document.getElementById("chat");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("send");
+const statusEl = document.getElementById("status");
+const attachBtn = document.getElementById("attachBtn");
+const voiceBtn = document.getElementById("voiceBtn");
+const fileInput = document.getElementById("file-input");
+const inputWrapper = document.getElementById("inputWrapper");
+
+// ============================================================
+// KEYBOARD HANDLING
+// ============================================================
+function setupKeyboardHandling() {
+  const visualViewport = window.visualViewport;
+  if (!visualViewport) return;
+
+  function onViewportChange() {
+    const keyboardHeight = window.innerHeight - visualViewport.height;
+    if (keyboardHeight > 100) {
+      inputWrapper.style.position = 'fixed';
+      inputWrapper.style.bottom = keyboardHeight + 'px';
+      inputWrapper.style.left = '0';
+      inputWrapper.style.right = '0';
+      inputWrapper.style.zIndex = '100';
+    } else {
+      inputWrapper.style.position = '';
+      inputWrapper.style.bottom = '';
+      inputWrapper.style.left = '';
+      inputWrapper.style.right = '';
+      inputWrapper.style.zIndex = '';
+    }
+    setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 50);
+  }
+
+  visualViewport.addEventListener('resize', onViewportChange);
+  visualViewport.addEventListener('scroll', onViewportChange);
+}
+
+input.addEventListener('focus', () => {
+  setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 300);
+});
+
+setupKeyboardHandling();
+
+// ============================================================
+// Chat logic
+// ============================================================
+function addMsg(text, role) {
+  const div = document.createElement("div");
+  div.className = `msg ${role}`;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function setStatus(text) {
+  statusEl.textContent = text;
+}
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMsg(text, "user");
+  input.value = "";
+  sendBtn.disabled = true;
+  setStatus("Thinking...");
+
+  const thinkingEl = addMsg("...", "bot thinking");
+
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (CONFIG.useGateway) {
+      headers["cf-aig-authorization"] = `Bearer ${CONFIG.apiKey}`;
+    } else {
+      headers["Authorization"] = `Bearer ${CONFIG.apiKey}`;
+    }
+
+    const res = await fetch(CONFIG.endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model: CONFIG.model,
+        messages: [{ role: "user", content: text }],
+        max_tokens: 1024,
+      }),
+    });
+
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content
+      || data.response
+      || JSON.stringify(data, null, 2);
+
+    thinkingEl.remove();
+    addMsg(reply, "bot");
+    setStatus("Ready");
+  } catch (err) {
+    thinkingEl.remove();
+    addMsg("Error: " + err.message, "bot");
+    setStatus("Error");
+  }
+
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+// ============================================================
+// Voice
+// ============================================================
+let recognition = null;
+let isRecording = false;
+
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+
+  recognition.onresult = (event) => {
+    input.value = event.results[0][0].transcript;
+    voiceBtn.classList.remove('recording');
+    isRecording = false;
+    input.focus();
+  };
+  recognition.onerror = () => {
+    voiceBtn.classList.remove('recording');
+    isRecording = false;
+  };
+  recognition.onend = () => {
+    voiceBtn.classList.remove('recording');
+    isRecording = false;
+  };
+}
+
+voiceBtn.addEventListener('click', () => {
+  if (!recognition) {
+    alert('Voice input not supported in this browser.');
+    return;
+  }
+  if (isRecording) {
+    recognition.stop();
+    voiceBtn.classList.remove('recording');
+    isRecording = false;
+  } else {
+    recognition.start();
+    voiceBtn.classList.add('recording');
+    isRecording = true;
+  }
+});
+
+// ============================================================
+// Attach
+// ============================================================
+attachBtn.addEventListener('click', () => {
+  fileInput.click();
+});
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    addMsg("📎 " + file.name, "user");
+  }
+  fileInput.value = '';
+});
+
+// ============================================================
+// Send
+// ============================================================
+sendBtn.addEventListener("click", sendMessage);
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+addMsg("Hello! I'm your AI assistant. Type, tap 🎤, or attach a file to get started.", "bot");
+</script>
+</body>
+</html>
