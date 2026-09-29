@@ -15,17 +15,19 @@
 
   <style>
     :root {
-      --bg: #f7f9fc;
-      --surface: #ffffff;
-      --surface-soft: #f1f5f9;
-      --border: #e5e7eb;
-      --text: #111827;
-      --muted: #6b7280;
+      /* DARK THEME */
+      --bg: #000000;
+      --surface: #0a0a0a;
+      --surface-soft: #141414;
+      --border: #1f1f1f;
+      --border-light: #2a2a2a;
+      --text: #f5f5f5;
+      --muted: #a3a3a3;
       --primary: #2563eb;
       --primary-dark: #1d4ed8;
-      --user: #2563eb;
-      --assistant: #ffffff;
-      --shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
+      --user: #1d4ed8;
+      --assistant: #0f0f0f;
+      --shadow: 0 10px 35px rgba(0, 0, 0, 0.8);
       --radius: 20px;
     }
 
@@ -48,7 +50,7 @@
         "Segoe UI",
         sans-serif;
       color: var(--text);
-      background: var(--bg);
+      background: #000000;
     }
 
     body {
@@ -69,43 +71,44 @@
       height: 100dvh;
       display: flex;
       flex-direction: column;
+      background: #000000;
     }
 
     /* =========================
-       HEADER
+       HEADER — SLIMMER
     ========================== */
 
     .header {
-      height: 68px;
+      height: 52px;
       flex-shrink: 0;
-      background: rgba(255, 255, 255, 0.92);
-      border-bottom: 1px solid var(--border);
+      background: #000000;
+      border-bottom: 1px solid #1a1a1a;
       backdrop-filter: blur(16px);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 22px;
+      padding: 0 16px;
       z-index: 10;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 11px;
+      gap: 8px;
       min-width: 0;
     }
 
     .brand-logo {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
       display: grid;
       place-items: center;
       color: white;
       font-weight: 800;
-      font-size: 17px;
+      font-size: 14px;
       background: linear-gradient(135deg, #ef4444, #2563eb);
-      box-shadow: 0 7px 18px rgba(37, 99, 235, 0.2);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
     }
 
     .brand-text {
@@ -113,35 +116,38 @@
     }
 
     .brand-name {
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 800;
       line-height: 1.1;
+      color: #f5f5f5;
     }
 
     .brand-subtitle {
-      color: var(--muted);
-      font-size: 11px;
-      margin-top: 3px;
+      color: #a3a3a3;
+      font-size: 9px;
+      margin-top: 1px;
     }
 
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 7px;
     }
 
     .new-chat-btn {
-      border: 1px solid var(--border);
-      background: white;
-      color: var(--text);
-      padding: 9px 14px;
-      border-radius: 11px;
+      border: 1px solid #262626;
+      background: #0a0a0a;
+      color: #f5f5f5;
+      padding: 6px 10px;
+      border-radius: 8px;
       font-weight: 650;
+      font-size: 12px;
       transition: 0.2s ease;
     }
 
     .new-chat-btn:hover {
-      background: var(--surface-soft);
+      background: #1a1a1a;
+      border-color: #333;
     }
 
     /* =========================
@@ -153,6 +159,7 @@
       min-height: 0;
       overflow-y: auto;
       scroll-behavior: smooth;
+      background: #000000;
     }
 
     .chat-container {
@@ -184,8 +191,8 @@
         radial-gradient(circle at 30% 20%, #60a5fa, transparent 35%),
         linear-gradient(135deg, #ef4444, #2563eb);
       box-shadow:
-        0 18px 40px rgba(37, 99, 235, 0.2),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+        0 18px 40px rgba(37, 99, 235, 0.25),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
     }
 
     .welcome h1 {
@@ -193,6 +200,7 @@
       font-size: clamp(30px, 5vw, 46px);
       letter-spacing: -1.5px;
       line-height: 1.08;
+      color: #f5f5f5;
     }
 
     .welcome h1 .red {
@@ -200,13 +208,13 @@
     }
 
     .welcome h1 .blue {
-      color: #2563eb;
+      color: #3b82f6;
     }
 
     .welcome p {
       max-width: 600px;
       margin: 14px auto 0;
-      color: var(--muted);
+      color: #a3a3a3;
       font-size: 15px;
       line-height: 1.6;
     }
@@ -223,8 +231,8 @@
     }
 
     .prompt-card {
-      border: 1px solid var(--border);
-      background: var(--surface);
+      border: 1px solid #262626;
+      background: #0a0a0a;
       border-radius: 16px;
       padding: 16px;
       text-align: left;
@@ -232,12 +240,14 @@
         transform 0.2s ease,
         box-shadow 0.2s ease,
         border-color 0.2s ease;
+      color: #f5f5f5;
     }
 
     .prompt-card:hover {
       transform: translateY(-2px);
-      border-color: #bfdbfe;
-      box-shadow: var(--shadow);
+      border-color: #3b82f6;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6);
+      background: #111111;
     }
 
     .prompt-icon {
@@ -248,12 +258,13 @@
     .prompt-title {
       font-size: 14px;
       font-weight: 750;
+      color: #f5f5f5;
     }
 
     .prompt-description {
       margin-top: 4px;
       font-size: 12px;
-      color: var(--muted);
+      color: #a3a3a3;
       line-height: 1.4;
     }
 
@@ -308,7 +319,8 @@
 
     .user .message-avatar {
       color: white;
-      background: #111827;
+      background: #1f1f1f;
+      border: 1px solid #333;
       order: 2;
     }
 
@@ -323,13 +335,15 @@
     }
 
     .assistant .message-content {
-      background: var(--assistant);
-      border: 1px solid var(--border);
+      background: #0f0f0f;
+      border: 1px solid #262626;
+      color: #e5e5e5;
     }
 
     .user .message-content {
       color: white;
-      background: var(--user);
+      background: #1d4ed8;
+      border: 1px solid #2563eb;
     }
 
     /* =========================
@@ -347,7 +361,7 @@
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: #9ca3af;
+      background: #525252;
       animation: typing 1.1s infinite ease-in-out;
     }
 
@@ -374,17 +388,17 @@
     }
 
     /* =========================
-       COMPOSER
+       COMPOSER — SLIM & DARK
     ========================== */
 
     .composer-area {
       flex-shrink: 0;
       background: linear-gradient(
         to top,
-        var(--bg) 75%,
-        rgba(247, 249, 252, 0)
+        #000000 80%,
+        rgba(0, 0, 0, 0)
       );
-      padding: 12px 16px 18px;
+      padding: 8px 14px 12px;
     }
 
     .composer {
@@ -395,45 +409,78 @@
     .input-box {
       display: flex;
       align-items: flex-end;
-      gap: 10px;
-      background: white;
-      border: 1px solid #dbe1ea;
-      border-radius: 19px;
-      padding: 9px 9px 9px 15px;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.07);
+      gap: 8px;
+      background: #0a0a0a;
+      border: 1px solid #262626;
+      border-radius: 16px;
+      padding: 6px 8px 6px 14px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     .input-box:focus-within {
-      border-color: #93c5fd;
+      border-color: #3b82f6;
       box-shadow:
-        0 10px 30px rgba(15, 23, 42, 0.07),
-        0 0 0 3px rgba(37, 99, 235, 0.08);
+        0 8px 25px rgba(0, 0, 0, 0.7),
+        0 0 0 3px rgba(37, 99, 235, 0.15);
     }
 
+    /* —————— ICON BUTTONS —————— */
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      border: 0;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      color: #a3a3a3;
+      transition: 0.2s ease;
+    }
+
+    .icon-btn:hover:not(:disabled) {
+      background: #1a1a1a;
+      color: #f5f5f5;
+    }
+
+    .icon-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* —————— TEXTAREA —————— */
     #messageInput {
       width: 100%;
-      min-height: 28px;
-      max-height: 140px;
+      min-height: 24px;
+      max-height: 110px;
       resize: none;
       outline: none;
       border: 0;
       background: transparent;
-      color: var(--text);
+      color: #f5f5f5;
       line-height: 1.5;
-      padding: 5px 0;
+      padding: 6px 0;
+      font-size: 14px;
     }
 
     #messageInput::placeholder {
-      color: #9ca3af;
+      color: #6b7280;
     }
 
+    /* —————— SEND BUTTON —————— */
     #sendButton {
-      width: 42px;
-      height: 42px;
+      width: 36px;
+      height: 36px;
       flex-shrink: 0;
       border: 0;
-      border-radius: 13px;
+      border-radius: 10px;
       display: grid;
       place-items: center;
       color: white;
@@ -447,20 +494,64 @@
     }
 
     #sendButton:disabled {
-      opacity: 0.45;
+      opacity: 0.35;
       cursor: not-allowed;
     }
 
-    .send-icon {
-      width: 18px;
-      height: 18px;
+    #sendButton svg {
+      width: 16px;
+      height: 16px;
       fill: currentColor;
     }
 
+    /* —————— VOICE ACTIVE STATE —————— */
+    .icon-btn.recording {
+      color: #ef4444;
+      background: #1a0a0a;
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    /* —————— FILE CHIP —————— */
+    .file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: #d4d4d4;
+      margin-top: 6px;
+    }
+
+    .file-chip button {
+      background: none;
+      border: 0;
+      color: #ef4444;
+      font-weight: 700;
+      padding: 0 2px;
+      font-size: 13px;
+    }
+
+    /* =========================
+       COMPOSER NOTE
+    ========================== */
+
     .composer-note {
       text-align: center;
-      margin-top: 8px;
-      color: #9ca3af;
+      margin-top: 6px;
+      color: #404040;
       font-size: 10px;
     }
 
@@ -478,27 +569,29 @@
 
     @media (max-width: 640px) {
       .header {
-        height: 62px;
-        padding: 0 13px;
+        height: 46px;
+        padding: 0 10px;
       }
 
       .brand-logo {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        font-size: 12px;
       }
 
       .brand-name {
-        font-size: 14px;
+        font-size: 12px;
       }
 
       .brand-subtitle {
-        font-size: 10px;
+        font-size: 8px;
       }
 
       .new-chat-btn {
-        padding: 8px 10px;
-        font-size: 12px;
+        padding: 5px 8px;
+        font-size: 11px;
+        border-radius: 7px;
       }
 
       .chat-container {
@@ -544,7 +637,24 @@
       }
 
       .composer-area {
-        padding: 8px 10px 12px;
+        padding: 6px 8px 10px;
+      }
+
+      .input-box {
+        padding: 4px 6px 4px 10px;
+        border-radius: 14px;
+      }
+
+      .icon-btn,
+      #sendButton {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+      }
+
+      #messageInput {
+        font-size: 13px;
+        padding: 5px 0;
       }
 
       .composer-note {
@@ -560,10 +670,10 @@
     <!-- HEADER -->
     <header class="header">
       <div class="brand">
-        <div class="brand-logo">F</div>
+        <div class="brand-logo">👽</div>
 
         <div class="brand-text">
-          <div class="brand-name">Fly Dragon AI</div>
+          <div class="brand-name">Fly 👽 AI</div>
           <div class="brand-subtitle">by FlyTripVisa</div>
         </div>
       </div>
@@ -586,7 +696,7 @@
 
         <!-- WELCOME -->
         <section id="welcome" class="welcome">
-          <div class="dragon-icon">🐉</div>
+          <div class="dragon-icon">👽</div>
 
           <h1>
             Welcome to
@@ -663,8 +773,32 @@
     <footer class="composer-area">
       <div class="composer">
 
+        <!-- FILE CHIP (shown when file selected) -->
+        <div id="fileChipContainer"></div>
+
         <form id="chatForm" class="input-box">
 
+          <!-- FILE UPLOAD BUTTON -->
+          <button
+            id="fileButton"
+            class="icon-btn"
+            type="button"
+            aria-label="Attach file"
+            title="Attach file"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H9v9.5a3.5 3.5 0 0 0 7 0V5a4 4 0 0 0-8 0v12.5c0 3.03 2.47 5.5 5.5 5.5s5.5-2.47 5.5-5.5V6h-1.5z"/>
+            </svg>
+          </button>
+          <input
+            id="fileInput"
+            type="file"
+            class="hidden"
+            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.webp,.csv,.xlsx"
+            multiple
+          />
+
+          <!-- TEXT INPUT -->
           <textarea
             id="messageInput"
             rows="1"
@@ -674,6 +808,20 @@
             aria-label="Message"
           ></textarea>
 
+          <!-- VOICE INPUT BUTTON -->
+          <button
+            id="voiceButton"
+            class="icon-btn"
+            type="button"
+            aria-label="Voice input"
+            title="Voice input"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
+            </svg>
+          </button>
+
+          <!-- SEND BUTTON -->
           <button
             id="sendButton"
             type="submit"
@@ -700,5 +848,117 @@
   </div>
 
   <script src="/chat.js" defer></script>
+
+  <!-- INLINE SCRIPT FOR FILE + VOICE UI (add your own backend logic in chat.js) -->
+  <script>
+    (function () {
+      const fileButton = document.getElementById('fileButton');
+      const fileInput = document.getElementById('fileInput');
+      const fileChipContainer = document.getElementById('fileChipContainer');
+      const voiceButton = document.getElementById('voiceButton');
+      const messageInput = document.getElementById('messageInput');
+
+      let selectedFiles = [];
+
+      // —————— FILE UPLOAD ——————
+      fileButton.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', () => {
+        selectedFiles = Array.from(fileInput.files);
+        renderFileChips();
+      });
+
+      function renderFileChips() {
+        fileChipContainer.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+          const chip = document.createElement('div');
+          chip.className = 'file-chip';
+          chip.innerHTML = `
+            <span>📎 ${file.name}</span>
+            <button type="button" data-index="${index}" aria-label="Remove file">×</button>
+          `;
+          chip.querySelector('button').addEventListener('click', (e) => {
+            const i = parseInt(e.target.dataset.index, 10);
+            selectedFiles.splice(i, 1);
+            renderFileChips();
+          });
+          fileChipContainer.appendChild(chip);
+        });
+        // Reset input so the same file can be re-selected if removed
+        if (selectedFiles.length === 0) {
+          fileInput.value = '';
+        }
+      }
+
+      // —————— VOICE INPUT ——————
+      let recognition = null;
+      let isRecording = false;
+
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          messageInput.value += transcript;
+          messageInput.focus();
+        };
+
+        recognition.onerror = (event) => {
+          console.warn('Speech recognition error:', event.error);
+          stopRecording();
+        };
+
+        recognition.onend = () => {
+          stopRecording();
+        };
+      } else {
+        voiceButton.disabled = true;
+        voiceButton.title = 'Voice input not supported in this browser';
+      }
+
+      function startRecording() {
+        if (!recognition) return;
+        isRecording = true;
+        voiceButton.classList.add('recording');
+        recognition.start();
+      }
+
+      function stopRecording() {
+        isRecording = false;
+        voiceButton.classList.remove('recording');
+        if (recognition) {
+          try { recognition.stop(); } catch (_) {}
+        }
+      }
+
+      voiceButton.addEventListener('click', () => {
+        if (isRecording) {
+          stopRecording();
+        } else {
+          startRecording();
+        }
+      });
+
+      // —————— AUTO-RESIZE TEXTAREA ——————
+      messageInput.addEventListener('input', () => {
+        messageInput.style.height = 'auto';
+        messageInput.style.height = Math.min(messageInput.scrollHeight, 110) + 'px';
+      });
+
+      // —————— EXPOSE FILES FOR chat.js ——————
+      window.getSelectedFiles = () => selectedFiles;
+      window.clearSelectedFiles = () => {
+        selectedFiles = [];
+        fileInput.value = '';
+        renderFileChips();
+      };
+    })();
+  </script>
 </body>
 </html>
