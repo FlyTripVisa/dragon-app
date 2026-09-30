@@ -76,8 +76,8 @@ async function handleChatRequest(
 		const stream = await env.AI.run<typeof MODEL_ID>(MODEL_ID, inputs, {
 			// Uncomment to use AI Gateway
 			// gateway: {
-			//   id: "YOUR_GATEWAY_ID", // Replace with your AI Gateway ID
-			//   skipCache: false,      // Set to true to bypass cache
+			//   id: "https://gateway.ai.cloudflare.com/v1/b73b80fa62deef032d3c08248cf2f30b/ai_dragon/openai/chat/completions", // Replace with your AI Gateway ID
+			//   skipCache: true,      // Set to true to bypass cache
 			//   cacheTtl: 3600,        // Cache time-to-live in seconds
 			// },
 		});
