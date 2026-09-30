@@ -1,92 +1,193 @@
 (() => {
   "use strict";
 
-  const chatForm = document.getElementById("chatForm");
-  const messageInput = document.getElementById("messageInput");
-  const sendButton = document.getElementById("sendButton");
-  const messages = document.getElementById("messages");
-  const chatArea = document.getElementById("chatArea");
-  const welcome = document.getElementById("welcome");
-  const quickPrompts = document.getElementById("quickPrompts");
-  const newChatButton = document.getElementById("newChatButton");
+  /*
+   * ==========================================
+   * FLYTRIPVISA
+   * Fly 🐉 AI Assistant
+   *
+   * Frontend endpoint:
+   * POST /api/chat
+   * ==========================================
+   */
 
-  const STORAGE_KEY = "flydragon-chat-history";
+  const API_ENDPOINT = "/api/chat";
+
+  const STORAGE_KEY =
+    "flydragon-chat-history";
+
+  const chatForm =
+    document.getElementById("chatForm");
+
+  const messageInput =
+    document.getElementById("messageInput");
+
+  const sendButton =
+    document.getElementById("sendButton");
+
+  const messages =
+    document.getElementById("messages");
+
+  const chatArea =
+    document.getElementById("chatArea");
+
+  const welcome =
+    document.getElementById("welcome");
+
+  const quickPrompts =
+    document.getElementById("quickPrompts");
+
+  const newChatButton =
+    document.getElementById("newChatButton");
 
   let conversation = [];
+
   let isStreaming = false;
 
-  /* =========================
-     INITIALIZE
-  ========================== */
+  /*
+   * ==========================================
+   * INITIALIZE
+   * ==========================================
+   */
 
   function init() {
     loadHistory();
+
     setupEvents();
+
     autoResize();
 
     if (conversation.length > 0) {
       hideWelcome();
+
       renderHistory();
     }
   }
 
-  /* =========================
-     EVENTS
-  ========================== */
+  /*
+   * ==========================================
+   * EVENTS
+   * ==========================================
+   */
 
   function setupEvents() {
-    if (!chatForm || !messageInput || !sendButton || !messages) {
-      console.error("Fly AI: Required chat elements are missing.");
+    if (
+      !chatForm ||
+      !messageInput ||
+      !sendButton ||
+      !messages
+    ) {
+      console.error(
+        "Fly AI: Required chat elements are missing."
+      );
+
       return;
     }
 
-    chatForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
+    /*
+     * Submit
+     */
 
-      if (isStreaming) return;
-
-      const text = messageInput.value.trim();
-
-      if (!text) return;
-
-      await sendMessage(text);
-    });
-
-    messageInput.addEventListener("input", autoResize);
-
-    messageInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && !event.shiftKey) {
+    chatForm.addEventListener(
+      "submit",
+      async (event) => {
         event.preventDefault();
 
-        if (!isStreaming) {
-          chatForm.requestSubmit();
+        if (isStreaming) {
+          return;
+        }
+
+        const text =
+          messageInput.value.trim();
+
+        if (!text) {
+          return;
+        }
+
+        await sendMessage(text);
+      }
+    );
+
+    /*
+     * Auto resize
+     */
+
+    messageInput.addEventListener(
+      "input",
+      autoResize
+    );
+
+    /*
+     * Enter = send
+     * Shift + Enter = new line
+     */
+
+    messageInput.addEventListener(
+      "keydown",
+      (event) => {
+        if (
+          event.key === "Enter" &&
+          !event.shiftKey
+        ) {
+          event.preventDefault();
+
+          if (!isStreaming) {
+            chatForm.requestSubmit();
+          }
         }
       }
-    });
+    );
+
+    /*
+     * New chat
+     */
 
     if (newChatButton) {
-      newChatButton.addEventListener("click", newChat);
+      newChatButton.addEventListener(
+        "click",
+        newChat
+      );
     }
 
-    document.querySelectorAll("[data-prompt]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const prompt = button.dataset.prompt || "";
+    /*
+     * Quick prompts
+     */
 
-        messageInput.value = prompt;
+    document
+      .querySelectorAll("[data-prompt]")
+      .forEach((button) => {
+        button.addEventListener(
+          "click",
+          () => {
+            const prompt =
+              button.dataset.prompt ||
+              "";
 
-        autoResize();
+            if (!prompt) {
+              return;
+            }
 
-        messageInput.focus();
+            messageInput.value =
+              prompt;
+
+            autoResize();
+
+            messageInput.focus();
+          }
+        );
       });
-    });
   }
 
-  /* =========================
-     SEND MESSAGE
-  ========================== */
+  /*
+   * ==========================================
+   * SEND MESSAGE
+   * ==========================================
+   */
 
   async function sendMessage(text) {
-    if (isStreaming) return;
+    if (isStreaming) {
+      return;
+    }
 
     isStreaming = true;
 
@@ -94,7 +195,19 @@
 
     hideWelcome();
 
-    addMessage("user", text);
+    /*
+     * Add user message to UI
+     */
+
+    addMessage(
+      "user",
+      text
+    );
+
+    /*
+     * Add user message to
+     * conversation history
+     */
 
     conversation.push({
       role: "user",
@@ -103,12 +216,22 @@
 
     saveHistory();
 
+    /*
+     * Clear input
+     */
+
     messageInput.value = "";
 
     autoResize();
 
+    /*
+     * Create empty assistant message
+     */
+
     const assistantMessage =
-      createMessageElement("assistant");
+      createMessageElement(
+        "assistant"
+      );
 
     messages.appendChild(
       assistantMessage.container
@@ -120,39 +243,89 @@
     scrollToBottom();
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
+      /*
+       * ======================================
+       * POST /api/chat
+       * ======================================
+       *
+       * AI Gateway is NOT called from here.
+       *
+       * Browser
+       *   ↓
+       * /api/chat
+       *   ↓
+       * Worker
+       *   ↓
+       * env.AI.run()
+       *   ↓
+       * AI Gateway
+       *   ↓
+       * Workers AI
+       */
 
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "text/event-stream",
-        },
+      const response =
+        await fetch(
+          API_ENDPOINT,
+          {
+            method: "POST",
 
-        body: JSON.stringify({
-          messages: conversation,
-        }),
-      });
+            headers: {
+              "Content-Type":
+                "application/json",
+
+              "Accept":
+                "text/event-stream",
+            },
+
+            body: JSON.stringify({
+              messages:
+                conversation,
+            }),
+          }
+        );
+
+      /*
+       * HTTP error
+       */
 
       if (!response.ok) {
         let errorMessage = "";
 
         try {
-          const errorData = await response.json();
+          const contentType =
+            response.headers.get(
+              "content-type"
+            ) || "";
 
-          errorMessage =
-            errorData.message ||
-            errorData.error ||
-            "";
+          if (
+            contentType.includes(
+              "application/json"
+            )
+          ) {
+            const errorData =
+              await response.json();
+
+            errorMessage =
+              errorData.message ||
+              errorData.error ||
+              "";
+          } else {
+            errorMessage =
+              await response.text();
+          }
         } catch {
-          errorMessage =
-            await response.text().catch(() => "");
+          errorMessage = "";
         }
 
         throw new Error(
           errorMessage ||
-          `Request failed with status ${response.status}`
+            `Request failed with status ${response.status}`
         );
       }
+
+      /*
+       * Streaming support
+       */
 
       if (!response.body) {
         throw new Error(
@@ -160,44 +333,97 @@
         );
       }
 
+      /*
+       * Read stream
+       */
+
       const reader =
         response.body.getReader();
 
       const decoder =
-        new TextDecoder("utf-8");
+        new TextDecoder(
+          "utf-8"
+        );
 
       let buffer = "";
 
       let assistantText = "";
 
+      /*
+       * ======================================
+       * STREAM LOOP
+       * ======================================
+       */
+
       while (true) {
-        const { value, done } =
-          await reader.read();
+        const {
+          value,
+          done,
+        } = await reader.read();
 
-        if (done) break;
+        if (done) {
+          break;
+        }
 
-        buffer += decoder.decode(value, {
-          stream: true,
-        });
+        /*
+         * Decode incoming bytes
+         */
+
+        buffer +=
+          decoder.decode(
+            value,
+            {
+              stream: true,
+            }
+          );
+
+        /*
+         * Parse SSE
+         */
 
         const parsed =
-          processSSEBuffer(buffer);
+          processSSEBuffer(
+            buffer
+          );
 
-        buffer = parsed.remaining;
+        buffer =
+          parsed.remaining;
 
-        for (const event of parsed.events) {
+        /*
+         * Process events
+         */
+
+        for (
+          const event
+          of parsed.events
+        ) {
           const token =
-            extractToken(event);
+            extractToken(
+              event
+            );
 
-          if (token === null) {
+          if (
+            token === null
+          ) {
             continue;
           }
 
-          if (token === "[DONE]") {
+          if (
+            token === "[DONE]"
+          ) {
             continue;
           }
 
-          assistantText += token;
+          /*
+           * Append token
+           */
+
+          assistantText +=
+            token;
+
+          /*
+           * Update UI
+           */
 
           contentElement.textContent =
             assistantText;
@@ -207,43 +433,67 @@
       }
 
       /*
-       * Flush decoder.
+       * Flush TextDecoder
        */
 
-      buffer += decoder.decode();
+      buffer +=
+        decoder.decode();
+
+      /*
+       * Process remaining SSE
+       */
 
       if (buffer.trim()) {
-        const finalEvents =
-          processSSEBuffer(buffer);
+        const finalParsed =
+          processSSEBuffer(
+            buffer
+          );
 
-        for (const event of finalEvents.events) {
+        for (
+          const event
+          of finalParsed.events
+        ) {
           const token =
-            extractToken(event);
+            extractToken(
+              event
+            );
 
           if (
             token !== null &&
             token !== "[DONE]"
           ) {
-            assistantText += token;
+            assistantText +=
+              token;
           }
         }
       }
 
       /*
-       * Empty response protection.
+       * Empty response protection
        */
 
-      if (!assistantText.trim()) {
+      if (
+        !assistantText.trim()
+      ) {
         assistantText =
           "I couldn't generate a response right now. Please try again.";
       }
 
+      /*
+       * Final UI update
+       */
+
       contentElement.textContent =
         assistantText;
 
+      /*
+       * Save assistant response
+       */
+
       conversation.push({
         role: "assistant",
-        content: assistantText,
+        content:
+          assistantText,
       });
 
       saveHistory();
@@ -273,27 +523,44 @@
     }
   }
 
-  /* =========================
-     SSE PARSER
-  ========================== */
+  /*
+   * ==========================================
+   * SSE BUFFER PARSER
+   * ==========================================
+   */
 
-  function processSSEBuffer(buffer) {
+  function processSSEBuffer(
+    buffer
+  ) {
     const events = [];
 
     /*
-     * Normalize Windows line endings.
+     * Normalize CRLF
      */
 
     const normalized =
-      buffer.replace(/\r\n/g, "\n");
+      buffer.replace(
+        /\r\n/g,
+        "\n"
+      );
 
     /*
-     * SSE events are separated by
-     * an empty line.
+     * Also normalize old CR
+     */
+
+    const clean =
+      normalized.replace(
+        /\r/g,
+        "\n"
+      );
+
+    /*
+     * SSE events are separated
+     * by a blank line.
      */
 
     const chunks =
-      normalized.split("\n\n");
+      clean.split("\n\n");
 
     /*
      * Last chunk may be incomplete.
@@ -302,10 +569,19 @@
     const remaining =
       chunks.pop() || "";
 
-    for (const chunk of chunks) {
-      if (!chunk.trim()) continue;
+    for (
+      const chunk
+      of chunks
+    ) {
+      if (
+        !chunk.trim()
+      ) {
+        continue;
+      }
 
-      events.push(chunk);
+      events.push(
+        chunk
+      );
     }
 
     return {
@@ -314,37 +590,68 @@
     };
   }
 
-  /* =========================
-     EXTRACT STREAM TOKEN
-  ========================== */
+  /*
+   * ==========================================
+   * EXTRACT TOKEN
+   * ==========================================
+   */
 
-  function extractToken(event) {
+  function extractToken(
+    event
+  ) {
     const lines =
       event.split("\n");
 
     const dataLines = [];
 
-    for (const line of lines) {
-      if (line.startsWith("data:")) {
+    /*
+     * Extract SSE data lines
+     */
+
+    for (
+      const line
+      of lines
+    ) {
+      if (
+        line.startsWith(
+          "data:"
+        )
+      ) {
         dataLines.push(
-          line.slice(5).trimStart()
+          line
+            .slice(5)
+            .trimStart()
         );
       }
     }
 
-    if (!dataLines.length) {
+    /*
+     * No data
+     */
+
+    if (
+      dataLines.length === 0
+    ) {
       return null;
     }
 
     const data =
       dataLines.join("\n");
 
-    if (data === "[DONE]") {
+    /*
+     * Done
+     */
+
+    if (
+      data === "[DONE]"
+    ) {
       return "[DONE]";
     }
 
     /*
-     * JSON response formats.
+     * ======================================
+     * JSON RESPONSE
+     * ======================================
      */
 
     try {
@@ -352,17 +659,19 @@
         JSON.parse(data);
 
       /*
-       * data: "hello"
+       * JSON string
        */
 
-      if (typeof parsed === "string") {
+      if (
+        typeof parsed ===
+        "string"
+      ) {
         return parsed;
       }
 
       /*
-       * data: {
-       *   response: "hello"
-       * }
+       * Workers AI:
+       * { response: "..." }
        */
 
       if (
@@ -373,9 +682,8 @@
       }
 
       /*
-       * data: {
-       *   text: "hello"
-       * }
+       * Generic:
+       * { text: "..." }
        */
 
       if (
@@ -386,9 +694,8 @@
       }
 
       /*
-       * data: {
-       *   content: "hello"
-       * }
+       * Generic:
+       * { content: "..." }
        */
 
       if (
@@ -399,9 +706,8 @@
       }
 
       /*
-       * data: {
-       *   token: "hello"
-       * }
+       * Generic:
+       * { token: "..." }
        */
 
       if (
@@ -412,7 +718,8 @@
       }
 
       /*
-       * Nested response object.
+       * Nested:
+       * { response: { text: "..." } }
        */
 
       if (
@@ -426,11 +733,14 @@
       }
 
       /*
-       * OpenAI-style choices.
+       * OpenAI-compatible:
+       * choices[].delta.content
        */
 
       if (
-        Array.isArray(parsed.choices) &&
+        Array.isArray(
+          parsed.choices
+        ) &&
         parsed.choices.length > 0
       ) {
         const choice =
@@ -441,7 +751,9 @@
           typeof choice.delta.content ===
             "string"
         ) {
-          return choice.delta.content;
+          return (
+            choice.delta.content
+          );
         }
 
         if (
@@ -449,7 +761,9 @@
           typeof choice.message.content ===
             "string"
         ) {
-          return choice.message.content;
+          return (
+            choice.message.content
+          );
         }
 
         if (
@@ -460,11 +774,15 @@
         }
       }
 
+      /*
+       * Unknown JSON structure.
+       */
+
       return null;
 
     } catch {
       /*
-       * Plain-text SSE:
+       * Plain text SSE:
        *
        * data: hello
        */
@@ -473,13 +791,20 @@
     }
   }
 
-  /* =========================
-     MESSAGE UI
-  ========================== */
+  /*
+   * ==========================================
+   * MESSAGE UI
+   * ==========================================
+   */
 
-  function addMessage(role, text) {
+  function addMessage(
+    role,
+    text
+  ) {
     const element =
-      createMessageElement(role);
+      createMessageElement(
+        role
+      );
 
     element.content.textContent =
       text;
@@ -491,15 +816,21 @@
     scrollToBottom();
   }
 
-  function createMessageElement(role) {
+  function createMessageElement(
+    role
+  ) {
     const container =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     container.className =
       `message ${role}`;
 
     const avatar =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     avatar.className =
       "message-avatar";
@@ -510,17 +841,31 @@
         : "You";
 
     const content =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     content.className =
       "message-content";
 
-    if (role === "assistant") {
-      container.appendChild(avatar);
-      container.appendChild(content);
+    if (
+      role === "assistant"
+    ) {
+      container.appendChild(
+        avatar
+      );
+
+      container.appendChild(
+        content
+      );
     } else {
-      container.appendChild(content);
-      container.appendChild(avatar);
+      container.appendChild(
+        content
+      );
+
+      container.appendChild(
+        avatar
+      );
     }
 
     return {
@@ -529,15 +874,19 @@
     };
   }
 
-  /* =========================
-     HISTORY
-  ========================== */
+  /*
+   * ==========================================
+   * CHAT HISTORY
+   * ==========================================
+   */
 
   function saveHistory() {
     try {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify(conversation)
+        JSON.stringify(
+          conversation
+        )
       );
     } catch (error) {
       console.warn(
@@ -554,12 +903,16 @@
           STORAGE_KEY
         );
 
-      if (!saved) return;
+      if (!saved) {
+        return;
+      }
 
       const parsed =
         JSON.parse(saved);
 
-      if (!Array.isArray(parsed)) {
+      if (
+        !Array.isArray(parsed)
+      ) {
         return;
       }
 
@@ -568,8 +921,10 @@
           (message) =>
             message &&
             (
-              message.role === "user" ||
-              message.role === "assistant"
+              message.role ===
+                "user" ||
+              message.role ===
+                "assistant"
             ) &&
             typeof message.content ===
               "string"
@@ -588,7 +943,10 @@
   function renderHistory() {
     messages.innerHTML = "";
 
-    for (const message of conversation) {
+    for (
+      const message
+      of conversation
+    ) {
       addMessage(
         message.role,
         message.content
@@ -596,12 +954,16 @@
     }
   }
 
-  /* =========================
-     NEW CHAT
-  ========================== */
+  /*
+   * ==========================================
+   * NEW CHAT
+   * ==========================================
+   */
 
   function newChat() {
-    if (isStreaming) return;
+    if (isStreaming) {
+      return;
+    }
 
     conversation = [];
 
@@ -639,13 +1001,17 @@
     scrollToBottom();
   }
 
-  /* =========================
-     UI STATE
-  ========================== */
+  /*
+   * ==========================================
+   * WELCOME
+   * ==========================================
+   */
 
   function hideWelcome() {
     if (welcome) {
-      welcome.classList.add("hidden");
+      welcome.classList.add(
+        "hidden"
+      );
     }
 
     if (quickPrompts) {
@@ -655,27 +1021,47 @@
     }
   }
 
-  function setLoading(loading) {
-    sendButton.disabled =
-      loading;
+  /*
+   * ==========================================
+   * LOADING STATE
+   * ==========================================
+   */
 
-    messageInput.disabled =
-      loading;
+  function setLoading(
+    loading
+  ) {
+    if (sendButton) {
+      sendButton.disabled =
+        loading;
 
-    if (loading) {
-      sendButton.setAttribute(
-        "aria-busy",
-        "true"
-      );
-    } else {
-      sendButton.removeAttribute(
-        "aria-busy"
-      );
+      if (loading) {
+        sendButton.setAttribute(
+          "aria-busy",
+          "true"
+        );
+      } else {
+        sendButton.removeAttribute(
+          "aria-busy"
+        );
+      }
+    }
+
+    if (messageInput) {
+      messageInput.disabled =
+        loading;
     }
   }
 
+  /*
+   * ==========================================
+   * TEXTAREA AUTO RESIZE
+   * ==========================================
+   */
+
   function autoResize() {
-    if (!messageInput) return;
+    if (!messageInput) {
+      return;
+    }
 
     messageInput.style.height =
       "auto";
@@ -690,19 +1076,45 @@
       `${height}px`;
   }
 
-  function scrollToBottom() {
-    if (!chatArea) return;
+  /*
+   * ==========================================
+   * SCROLL
+   * ==========================================
+   */
 
-    requestAnimationFrame(() => {
-      chatArea.scrollTop =
-        chatArea.scrollHeight;
-    });
+  function scrollToBottom() {
+    if (!chatArea) {
+      return;
+    }
+
+    requestAnimationFrame(
+      () => {
+        chatArea.scrollTop =
+          chatArea.scrollHeight;
+      }
+    );
   }
 
-  /* =========================
-     START
-  ========================== */
+  /*
+   * ==========================================
+   * START
+   * ==========================================
+   */
 
   init();
 
 })();
+
+এখানে আলাদা করে শেষে আর কোনো "fetch()" লিখবে না। "sendMessage()"-এর এই অংশটাই একমাত্র API call:
+
+const response = await fetch("/api/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Accept": "text/event-stream"
+  },
+  body: JSON.stringify({
+    messages: conversation
+  })
+});
+
