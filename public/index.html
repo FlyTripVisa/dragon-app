@@ -2,12 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0, viewport-fit=cover"
   />
 
+  <meta
+    name="theme-color"
+    content="#000000"
+  />
+
   <title>Fly Dragon AI — FlyTripVisa</title>
+
   <meta
     name="description"
     content="Fly Dragon AI — Your AI travel and visa assistant by FlyTripVisa."
@@ -15,19 +22,24 @@
 
   <style>
     :root {
-      /* DARK THEME */
       --bg: #000000;
       --surface: #0a0a0a;
       --surface-soft: #141414;
       --border: #1f1f1f;
       --border-light: #2a2a2a;
+
       --text: #f5f5f5;
       --muted: #a3a3a3;
+
       --primary: #2563eb;
       --primary-dark: #1d4ed8;
+
       --user: #1d4ed8;
       --assistant: #0f0f0f;
-      --shadow: 0 10px 35px rgba(0, 0, 0, 0.8);
+
+      --shadow:
+        0 10px 35px rgba(0, 0, 0, 0.8);
+
       --radius: 20px;
     }
 
@@ -37,10 +49,11 @@
 
     html,
     body {
-      margin: 0;
-      padding: 0;
       width: 100%;
       height: 100%;
+      margin: 0;
+      padding: 0;
+
       font-family:
         Inter,
         ui-sans-serif,
@@ -49,8 +62,9 @@
         BlinkMacSystemFont,
         "Segoe UI",
         sans-serif;
+
       color: var(--text);
-      background: #000000;
+      background: #000;
     }
 
     body {
@@ -58,7 +72,8 @@
     }
 
     button,
-    textarea {
+    textarea,
+    input {
       font: inherit;
     }
 
@@ -66,49 +81,84 @@
       cursor: pointer;
     }
 
+    button:disabled {
+      cursor: not-allowed;
+    }
+
+    /* =========================================================
+       APP
+    ========================================================= */
+
     .app {
       width: 100%;
       height: 100dvh;
+
       display: flex;
       flex-direction: column;
-      background: #000000;
+
+      background: #000;
     }
 
-    /* =========================
-       HEADER — SLIMMER
-    ========================== */
+    /* =========================================================
+       HEADER
+    ========================================================= */
 
     .header {
       height: 52px;
       flex-shrink: 0;
-      background: #000000;
-      border-bottom: 1px solid #1a1a1a;
-      backdrop-filter: blur(16px);
+
       display: flex;
       align-items: center;
       justify-content: space-between;
+
       padding: 0 16px;
-      z-index: 10;
+
+      background: #000;
+
+      border-bottom:
+        1px solid #1a1a1a;
+
+      backdrop-filter:
+        blur(16px);
+
+      z-index: 20;
     }
 
     .brand {
       display: flex;
       align-items: center;
+
       gap: 8px;
+
       min-width: 0;
     }
 
     .brand-logo {
       width: 30px;
       height: 30px;
-      border-radius: 9px;
+
+      flex-shrink: 0;
+
       display: grid;
       place-items: center;
-      color: white;
-      font-weight: 800;
-      font-size: 14px;
-      background: linear-gradient(135deg, #ef4444, #2563eb);
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+
+      border-radius: 9px;
+
+      color: #fff;
+
+      font-size: 15px;
+      font-weight: 900;
+
+      background:
+        linear-gradient(
+          135deg,
+          #ef4444,
+          #2563eb
+        );
+
+      box-shadow:
+        0 4px 12px
+        rgba(37, 99, 235, 0.3);
     }
 
     .brand-text {
@@ -116,91 +166,179 @@
     }
 
     .brand-name {
+      color: #f5f5f5;
+
       font-size: 13px;
       font-weight: 800;
+
       line-height: 1.1;
-      color: #f5f5f5;
+
+      white-space: nowrap;
     }
 
     .brand-subtitle {
-      color: #a3a3a3;
+      margin-top: 2px;
+
+      color: #737373;
+
       font-size: 9px;
-      margin-top: 1px;
+
+      white-space: nowrap;
     }
 
     .header-actions {
       display: flex;
       align-items: center;
+
       gap: 7px;
     }
 
     .new-chat-btn {
-      border: 1px solid #262626;
+      border:
+        1px solid #262626;
+
       background: #0a0a0a;
+
       color: #f5f5f5;
-      padding: 6px 10px;
+
+      padding:
+        6px 10px;
+
       border-radius: 8px;
-      font-weight: 650;
+
       font-size: 12px;
-      transition: 0.2s ease;
+      font-weight: 650;
+
+      transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
     }
 
     .new-chat-btn:hover {
-      background: #1a1a1a;
+      background: #151515;
       border-color: #333;
+
+      transform:
+        translateY(-1px);
     }
 
-    /* =========================
+    .new-chat-btn:active {
+      transform:
+        translateY(0);
+    }
+
+    /* =========================================================
        CHAT AREA
-    ========================== */
+    ========================================================= */
 
     .chat-area {
       flex: 1;
       min-height: 0;
+
       overflow-y: auto;
+
       scroll-behavior: smooth;
-      background: #000000;
+
+      background: #000;
+
+      -webkit-overflow-scrolling:
+        touch;
+    }
+
+    .chat-area::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-area::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .chat-area::-webkit-scrollbar-thumb {
+      background: #222;
+      border-radius: 999px;
     }
 
     .chat-container {
-      width: min(920px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 42px 0 24px;
+      width:
+        min(
+          920px,
+          calc(100% - 32px)
+        );
+
+      margin:
+        0 auto;
+
+      padding:
+        42px 0 24px;
     }
 
-    /* =========================
+    /* =========================================================
        WELCOME
-    ========================== */
+    ========================================================= */
 
     .welcome {
       text-align: center;
-      padding: 32px 12px 30px;
+
+      padding:
+        32px 12px 30px;
     }
 
     .dragon-icon {
       width: 76px;
       height: 76px;
-      margin: 0 auto 20px;
-      border-radius: 24px;
+
+      margin:
+        0 auto 20px;
+
       display: grid;
       place-items: center;
-      color: white;
+
+      border-radius: 24px;
+
+      color: #fff;
+
       font-size: 34px;
       font-weight: 900;
+
       background:
-        radial-gradient(circle at 30% 20%, #60a5fa, transparent 35%),
-        linear-gradient(135deg, #ef4444, #2563eb);
+        radial-gradient(
+          circle at 30% 20%,
+          #60a5fa,
+          transparent 35%
+        ),
+        linear-gradient(
+          135deg,
+          #ef4444,
+          #2563eb
+        );
+
       box-shadow:
-        0 18px 40px rgba(37, 99, 235, 0.25),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        0 18px 40px
+        rgba(37, 99, 235, 0.25),
+
+        inset 0 0 0 1px
+        rgba(255, 255, 255, 0.1);
     }
 
     .welcome h1 {
       margin: 0;
-      font-size: clamp(30px, 5vw, 46px);
-      letter-spacing: -1.5px;
-      line-height: 1.08;
+
       color: #f5f5f5;
+
+      font-size:
+        clamp(
+          30px,
+          5vw,
+          46px
+        );
+
+      font-weight: 850;
+
+      letter-spacing:
+        -1.5px;
+
+      line-height: 1.08;
     }
 
     .welcome h1 .red {
@@ -213,302 +351,600 @@
 
     .welcome p {
       max-width: 600px;
-      margin: 14px auto 0;
+
+      margin:
+        14px auto 0;
+
       color: #a3a3a3;
+
       font-size: 15px;
+
       line-height: 1.6;
     }
 
-    /* =========================
+    /* =========================================================
        QUICK PROMPTS
-    ========================== */
+    ========================================================= */
 
     .quick-prompts {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+
+      grid-template-columns:
+        repeat(
+          2,
+          minmax(0, 1fr)
+        );
+
       gap: 12px;
-      margin: 10px 0 30px;
+
+      margin:
+        10px 0 30px;
     }
 
     .prompt-card {
-      border: 1px solid #262626;
+      width: 100%;
+
+      border:
+        1px solid #262626;
+
       background: #0a0a0a;
+
       border-radius: 16px;
+
       padding: 16px;
+
       text-align: left;
+
+      color: #f5f5f5;
+
       transition:
         transform 0.2s ease,
         box-shadow 0.2s ease,
-        border-color 0.2s ease;
-      color: #f5f5f5;
+        border-color 0.2s ease,
+        background 0.2s ease;
     }
 
     .prompt-card:hover {
-      transform: translateY(-2px);
-      border-color: #3b82f6;
-      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.6);
-      background: #111111;
+      transform:
+        translateY(-2px);
+
+      border-color:
+        #3b82f6;
+
+      background:
+        #111;
+
+      box-shadow:
+        0 10px 35px
+        rgba(0, 0, 0, 0.6);
+    }
+
+    .prompt-card:active {
+      transform:
+        translateY(0);
     }
 
     .prompt-icon {
-      font-size: 20px;
       margin-bottom: 9px;
+
+      font-size: 20px;
     }
 
     .prompt-title {
+      color: #f5f5f5;
+
       font-size: 14px;
       font-weight: 750;
-      color: #f5f5f5;
     }
 
     .prompt-description {
       margin-top: 4px;
-      font-size: 12px;
+
       color: #a3a3a3;
+
+      font-size: 12px;
+
       line-height: 1.4;
     }
 
-    /* =========================
+    /* =========================================================
        MESSAGES
-    ========================== */
+    ========================================================= */
 
     #messages {
       display: flex;
+
       flex-direction: column;
+
       gap: 18px;
     }
 
     .message {
       display: flex;
-      gap: 11px;
+
       align-items: flex-start;
-      animation: messageIn 0.2s ease;
+
+      gap: 11px;
+
+      animation:
+        messageIn 0.2s ease;
     }
 
     @keyframes messageIn {
       from {
         opacity: 0;
-        transform: translateY(5px);
+
+        transform:
+          translateY(5px);
       }
 
       to {
         opacity: 1;
-        transform: translateY(0);
+
+        transform:
+          translateY(0);
       }
     }
 
     .message.user {
-      justify-content: flex-end;
+      justify-content:
+        flex-end;
     }
 
     .message-avatar {
       width: 34px;
       height: 34px;
+
       flex-shrink: 0;
-      border-radius: 10px;
+
       display: grid;
       place-items: center;
-      font-size: 13px;
+
+      border-radius: 10px;
+
+      font-size: 12px;
       font-weight: 800;
     }
 
     .assistant .message-avatar {
-      color: white;
-      background: linear-gradient(135deg, #ef4444, #2563eb);
+      color: #fff;
+
+      background:
+        linear-gradient(
+          135deg,
+          #ef4444,
+          #2563eb
+        );
+
+      box-shadow:
+        0 4px 12px
+        rgba(37, 99, 235, 0.18);
     }
 
     .user .message-avatar {
-      color: white;
-      background: #1f1f1f;
-      border: 1px solid #333;
       order: 2;
+
+      color: #fff;
+
+      background: #1f1f1f;
+
+      border:
+        1px solid #333;
     }
 
     .message-content {
-      max-width: min(78%, 720px);
+      max-width:
+        min(
+          78%,
+          720px
+        );
+
       border-radius: 17px;
-      padding: 12px 15px;
+
+      padding:
+        12px 15px;
+
       font-size: 14px;
+
       line-height: 1.65;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
+
+      white-space:
+        pre-wrap;
+
+      overflow-wrap:
+        anywhere;
     }
 
     .assistant .message-content {
-      background: #0f0f0f;
-      border: 1px solid #262626;
       color: #e5e5e5;
+
+      background:
+        #0f0f0f;
+
+      border:
+        1px solid #262626;
     }
 
     .user .message-content {
-      color: white;
-      background: #1d4ed8;
-      border: 1px solid #2563eb;
+      color: #fff;
+
+      background:
+        #1d4ed8;
+
+      border:
+        1px solid #2563eb;
     }
 
-    /* =========================
+    /* =========================================================
        TYPING
-    ========================== */
+    ========================================================= */
 
     .typing {
       display: inline-flex;
+
       align-items: center;
+
       gap: 4px;
-      padding: 5px 0;
+
+      padding:
+        5px 0;
     }
 
     .typing span {
       width: 6px;
       height: 6px;
+
       border-radius: 50%;
+
       background: #525252;
-      animation: typing 1.1s infinite ease-in-out;
+
+      animation:
+        typing 1.1s
+        infinite
+        ease-in-out;
     }
 
     .typing span:nth-child(2) {
-      animation-delay: 0.15s;
+      animation-delay:
+        0.15s;
     }
 
     .typing span:nth-child(3) {
-      animation-delay: 0.3s;
+      animation-delay:
+        0.3s;
     }
 
     @keyframes typing {
       0%,
       60%,
       100% {
-        transform: translateY(0);
+        transform:
+          translateY(0);
+
         opacity: 0.45;
       }
 
       30% {
-        transform: translateY(-4px);
+        transform:
+          translateY(-4px);
+
         opacity: 1;
       }
     }
 
-    /* =========================
-       COMPOSER — SLIM & DARK
-    ========================== */
+    /* =========================================================
+       COMPOSER
+    ========================================================= */
 
     .composer-area {
       flex-shrink: 0;
-      background: linear-gradient(
-        to top,
-        #000000 80%,
-        rgba(0, 0, 0, 0)
-      );
-      padding: 8px 14px 12px;
+
+      background:
+        linear-gradient(
+          to top,
+          #000 80%,
+          rgba(0, 0, 0, 0)
+        );
+
+      padding:
+        8px 14px 12px;
     }
 
     .composer {
-      width: min(920px, 100%);
-      margin: 0 auto;
+      width:
+        min(
+          920px,
+          100%
+        );
+
+      margin:
+        0 auto;
     }
+
+    /* =========================================================
+       FILE CHIPS
+    ========================================================= */
+
+    #fileChipContainer {
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap: 6px;
+    }
+
+    .file-chip {
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 6px;
+
+      max-width: 100%;
+
+      margin-bottom: 6px;
+
+      padding:
+        5px 9px;
+
+      color: #d4d4d4;
+
+      background:
+        #141414;
+
+      border:
+        1px solid #262626;
+
+      border-radius: 8px;
+
+      font-size: 11px;
+    }
+
+    .file-chip span {
+      max-width:
+        260px;
+
+      overflow: hidden;
+
+      text-overflow:
+        ellipsis;
+
+      white-space:
+        nowrap;
+    }
+
+    .file-chip button {
+      flex-shrink: 0;
+
+      padding:
+        0 2px;
+
+      border: 0;
+
+      background:
+        transparent;
+
+      color: #ef4444;
+
+      font-size: 15px;
+
+      line-height: 1;
+    }
+
+    /* =========================================================
+       INPUT BOX
+    ========================================================= */
 
     .input-box {
       display: flex;
-      align-items: flex-end;
+
+      align-items:
+        flex-end;
+
       gap: 8px;
-      background: #0a0a0a;
-      border: 1px solid #262626;
+
+      padding:
+        6px 8px 6px 14px;
+
+      background:
+        #0a0a0a;
+
+      border:
+        1px solid #262626;
+
       border-radius: 16px;
-      padding: 6px 8px 6px 14px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+      box-shadow:
+        0 8px 25px
+        rgba(0, 0, 0, 0.7);
+
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
     }
 
     .input-box:focus-within {
-      border-color: #3b82f6;
+      border-color:
+        #3b82f6;
+
       box-shadow:
-        0 8px 25px rgba(0, 0, 0, 0.7),
-        0 0 0 3px rgba(37, 99, 235, 0.15);
+        0 8px 25px
+        rgba(0, 0, 0, 0.7),
+
+        0 0 0 3px
+        rgba(37, 99, 235, 0.15);
     }
 
-    /* —————— ICON BUTTONS —————— */
+    /* =========================================================
+       ICON BUTTON
+    ========================================================= */
+
     .icon-btn {
       width: 36px;
       height: 36px;
+
       flex-shrink: 0;
-      border: 0;
-      border-radius: 10px;
+
       display: grid;
       place-items: center;
-      background: transparent;
-      color: #a3a3a3;
-      transition: 0.2s ease;
+
+      border: 0;
+
+      border-radius: 10px;
+
+      background:
+        transparent;
+
+      color:
+        #a3a3a3;
+
+      transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
     }
 
     .icon-btn:hover:not(:disabled) {
-      background: #1a1a1a;
-      color: #f5f5f5;
+      background:
+        #1a1a1a;
+
+      color:
+        #f5f5f5;
+    }
+
+    .icon-btn:active:not(:disabled) {
+      transform:
+        scale(0.95);
     }
 
     .icon-btn:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
+      opacity:
+        0.35;
     }
 
     .icon-btn svg {
       width: 18px;
       height: 18px;
-      fill: currentColor;
+
+      fill:
+        currentColor;
     }
 
-    /* —————— TEXTAREA —————— */
+    /* =========================================================
+       TEXTAREA
+    ========================================================= */
+
     #messageInput {
       width: 100%;
-      min-height: 24px;
-      max-height: 110px;
+
+      min-height:
+        24px;
+
+      max-height:
+        140px;
+
       resize: none;
+
       outline: none;
+
       border: 0;
-      background: transparent;
-      color: #f5f5f5;
-      line-height: 1.5;
-      padding: 6px 0;
-      font-size: 14px;
+
+      background:
+        transparent;
+
+      color:
+        #f5f5f5;
+
+      line-height:
+        1.5;
+
+      padding:
+        6px 0;
+
+      font-size:
+        14px;
+
+      overflow-y:
+        auto;
     }
 
     #messageInput::placeholder {
-      color: #6b7280;
+      color:
+        #6b7280;
     }
 
-    /* —————— SEND BUTTON —————— */
+    #messageInput:disabled {
+      opacity:
+        0.65;
+    }
+
+    /* =========================================================
+       SEND BUTTON
+    ========================================================= */
+
     #sendButton {
       width: 36px;
       height: 36px;
+
       flex-shrink: 0;
-      border: 0;
-      border-radius: 10px;
+
       display: grid;
       place-items: center;
-      color: white;
-      background: var(--primary);
-      transition: 0.2s ease;
+
+      border: 0;
+
+      border-radius: 10px;
+
+      color: #fff;
+
+      background:
+        var(--primary);
+
+      transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        opacity 0.2s ease;
     }
 
     #sendButton:hover:not(:disabled) {
-      background: var(--primary-dark);
-      transform: translateY(-1px);
+      background:
+        var(--primary-dark);
+
+      transform:
+        translateY(-1px);
+    }
+
+    #sendButton:active:not(:disabled) {
+      transform:
+        translateY(0);
     }
 
     #sendButton:disabled {
-      opacity: 0.35;
-      cursor: not-allowed;
+      opacity:
+        0.35;
     }
 
     #sendButton svg {
       width: 16px;
       height: 16px;
-      fill: currentColor;
+
+      fill:
+        currentColor;
     }
 
-    /* —————— VOICE ACTIVE STATE —————— */
+    /* =========================================================
+       VOICE RECORDING
+    ========================================================= */
+
     .icon-btn.recording {
-      color: #ef4444;
-      background: #1a0a0a;
-      animation: pulse 1.2s infinite;
+      color:
+        #ef4444;
+
+      background:
+        #1a0a0a;
+
+      animation:
+        pulse 1.2s infinite;
     }
 
     @keyframes pulse {
@@ -516,169 +952,255 @@
       100% {
         opacity: 1;
       }
+
       50% {
         opacity: 0.5;
       }
     }
 
-    /* —————— FILE CHIP —————— */
-    .file-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #141414;
-      border: 1px solid #262626;
-      border-radius: 8px;
-      padding: 4px 10px;
-      font-size: 11px;
-      color: #d4d4d4;
-      margin-top: 6px;
-    }
-
-    .file-chip button {
-      background: none;
-      border: 0;
-      color: #ef4444;
-      font-weight: 700;
-      padding: 0 2px;
-      font-size: 13px;
-    }
-
-    /* =========================
-       COMPOSER NOTE
-    ========================== */
+    /* =========================================================
+       FOOTER NOTE
+    ========================================================= */
 
     .composer-note {
-      text-align: center;
-      margin-top: 6px;
-      color: #404040;
-      font-size: 10px;
+      margin-top:
+        6px;
+
+      text-align:
+        center;
+
+      color:
+        #404040;
+
+      font-size:
+        10px;
+
+      line-height:
+        1.4;
     }
 
-    /* =========================
-       EMPTY STATE
-    ========================== */
+    /* =========================================================
+       HIDDEN
+    ========================================================= */
 
     .hidden {
-      display: none !important;
+      display:
+        none !important;
     }
 
-    /* =========================
+    /* =========================================================
        MOBILE
-    ========================== */
+    ========================================================= */
 
     @media (max-width: 640px) {
       .header {
-        height: 46px;
-        padding: 0 10px;
+        height:
+          46px;
+
+        padding:
+          0 10px;
       }
 
       .brand-logo {
-        width: 26px;
-        height: 26px;
-        border-radius: 8px;
-        font-size: 12px;
+        width:
+          26px;
+
+        height:
+          26px;
+
+        border-radius:
+          8px;
+
+        font-size:
+          12px;
       }
 
       .brand-name {
-        font-size: 12px;
+        font-size:
+          12px;
       }
 
       .brand-subtitle {
-        font-size: 8px;
+        font-size:
+          8px;
       }
 
       .new-chat-btn {
-        padding: 5px 8px;
-        font-size: 11px;
-        border-radius: 7px;
+        padding:
+          5px 8px;
+
+        font-size:
+          11px;
+
+        border-radius:
+          7px;
       }
 
       .chat-container {
-        width: min(100% - 20px, 920px);
-        padding-top: 22px;
+        width:
+          calc(100% - 20px);
+
+        padding-top:
+          22px;
       }
 
       .welcome {
-        padding: 24px 5px 22px;
+        padding:
+          24px 5px 22px;
       }
 
       .dragon-icon {
-        width: 62px;
-        height: 62px;
-        border-radius: 19px;
-        font-size: 28px;
+        width:
+          62px;
+
+        height:
+          62px;
+
+        border-radius:
+          19px;
+
+        font-size:
+          28px;
       }
 
       .welcome h1 {
-        font-size: 30px;
+        font-size:
+          30px;
       }
 
       .welcome p {
-        font-size: 13px;
+        font-size:
+          13px;
       }
 
       .quick-prompts {
-        gap: 8px;
+        gap:
+          8px;
       }
 
       .prompt-card {
-        padding: 12px;
-        border-radius: 14px;
+        padding:
+          12px;
+
+        border-radius:
+          14px;
       }
 
       .prompt-description {
-        display: none;
+        display:
+          none;
       }
 
       .message-content {
-        max-width: 86%;
-        font-size: 13px;
+        max-width:
+          86%;
+
+        font-size:
+          13px;
       }
 
       .composer-area {
-        padding: 6px 8px 10px;
+        padding:
+          6px 8px 10px;
       }
 
       .input-box {
-        padding: 4px 6px 4px 10px;
-        border-radius: 14px;
+        padding:
+          4px 6px 4px 10px;
+
+        border-radius:
+          14px;
       }
 
       .icon-btn,
       #sendButton {
-        width: 34px;
-        height: 34px;
-        border-radius: 9px;
+        width:
+          34px;
+
+        height:
+          34px;
+
+        border-radius:
+          9px;
       }
 
       #messageInput {
-        font-size: 13px;
-        padding: 5px 0;
+        font-size:
+          13px;
+
+        padding:
+          5px 0;
       }
 
       .composer-note {
-        font-size: 9px;
+        font-size:
+          9px;
+      }
+
+      .file-chip span {
+        max-width:
+          180px;
+      }
+    }
+
+    /* =========================================================
+       VERY SMALL DEVICES
+    ========================================================= */
+
+    @media (max-width: 380px) {
+      .brand-subtitle {
+        display:
+          none;
+      }
+
+      .new-chat-btn {
+        font-size:
+          10px;
+      }
+
+      .message-content {
+        max-width:
+          82%;
       }
     }
   </style>
 </head>
 
 <body>
+
   <div class="app">
 
-    <!-- HEADER -->
+    <!-- =======================================================
+         HEADER
+    ======================================================== -->
+
     <header class="header">
+
       <div class="brand">
-        <div class="brand-logo">👽</div>
+
+        <div
+          class="brand-logo"
+          aria-hidden="true"
+        >
+          🐉
+        </div>
 
         <div class="brand-text">
-          <div class="brand-name">Fly 👽 AI</div>
-          <div class="brand-subtitle">by FlyTripVisa</div>
+
+          <div class="brand-name">
+            Fly 🐉 AI
+          </div>
+
+          <div class="brand-subtitle">
+            by FlyTripVisa
+          </div>
+
         </div>
+
       </div>
 
       <div class="header-actions">
+
         <button
           id="newChatButton"
           class="new-chat-btn"
@@ -687,98 +1209,195 @@
         >
           + New Chat
         </button>
+
       </div>
+
     </header>
 
-    <!-- CHAT -->
-    <main id="chatArea" class="chat-area">
+
+    <!-- =======================================================
+         CHAT AREA
+    ======================================================== -->
+
+    <main
+      id="chatArea"
+      class="chat-area"
+    >
+
       <div class="chat-container">
 
-        <!-- WELCOME -->
-        <section id="welcome" class="welcome">
-          <div class="dragon-icon">👽</div>
+        <!-- ===================================================
+             WELCOME
+        ==================================================== -->
+
+        <section
+          id="welcome"
+          class="welcome"
+        >
+
+          <div
+            class="dragon-icon"
+            aria-hidden="true"
+          >
+            🐉
+          </div>
 
           <h1>
             Welcome to
-            <span class="red">Fly</span>
-            <span class="blue">Dragon AI</span>
+            <span class="red">
+              Fly
+            </span>
+            <span class="blue">
+              Dragon AI
+            </span>
           </h1>
 
           <p>
-            Your intelligent travel assistant for visa information,
-            flights, hotels and international travel.
+            Your intelligent travel assistant for
+            visa information, flights, hotels
+            and international travel.
           </p>
+
         </section>
 
-        <!-- QUICK PROMPTS -->
-        <section id="quickPrompts" class="quick-prompts">
+
+        <!-- =================================================
+             QUICK PROMPTS
+        ================================================== -->
+
+        <section
+          id="quickPrompts"
+          class="quick-prompts"
+          aria-label="Quick prompts"
+        >
 
           <button
             class="prompt-card"
             type="button"
             data-prompt="Where can I travel from Bangladesh without a visa?"
           >
-            <div class="prompt-icon">🌎</div>
-            <div class="prompt-title">Where can I travel?</div>
+
+            <div class="prompt-icon">
+              🌎
+            </div>
+
+            <div class="prompt-title">
+              Where can I travel?
+            </div>
+
             <div class="prompt-description">
               Explore visa-free and visa-on-arrival destinations.
             </div>
+
           </button>
+
 
           <button
             class="prompt-card"
             type="button"
             data-prompt="Tell me about the Japan tourist visa requirements."
           >
-            <div class="prompt-icon">🇯🇵</div>
-            <div class="prompt-title">Check Japan Visa</div>
+
+            <div class="prompt-icon">
+              🇯🇵
+            </div>
+
+            <div class="prompt-title">
+              Check Japan Visa
+            </div>
+
             <div class="prompt-description">
               Learn about documents and application requirements.
             </div>
+
           </button>
+
 
           <button
             class="prompt-card"
             type="button"
             data-prompt="Help me find a flight for my next international trip."
           >
-            <div class="prompt-icon">✈️</div>
-            <div class="prompt-title">Find Flight</div>
+
+            <div class="prompt-icon">
+              ✈️
+            </div>
+
+            <div class="prompt-title">
+              Find Flight
+            </div>
+
             <div class="prompt-description">
               Get help planning your international flight.
             </div>
+
           </button>
+
 
           <button
             class="prompt-card"
             type="button"
             data-prompt="Help me find a suitable hotel for my trip."
           >
-            <div class="prompt-icon">🏨</div>
-            <div class="prompt-title">Hotel Booking</div>
+
+            <div class="prompt-icon">
+              🏨
+            </div>
+
+            <div class="prompt-title">
+              Hotel Booking
+            </div>
+
             <div class="prompt-description">
               Get recommendations for your destination.
             </div>
+
           </button>
 
         </section>
 
-        <!-- MESSAGES -->
-        <section id="messages" aria-live="polite"></section>
+
+        <!-- =================================================
+             MESSAGES
+        ================================================== -->
+
+        <section
+          id="messages"
+          aria-live="polite"
+          aria-label="Chat messages"
+        ></section>
 
       </div>
+
     </main>
 
-    <!-- COMPOSER -->
+
+    <!-- =======================================================
+         COMPOSER
+    ======================================================== -->
+
     <footer class="composer-area">
+
       <div class="composer">
 
-        <!-- FILE CHIP (shown when file selected) -->
-        <div id="fileChipContainer"></div>
+        <!-- FILE CHIPS -->
 
-        <form id="chatForm" class="input-box">
+        <div
+          id="fileChipContainer"
+          aria-live="polite"
+        ></div>
 
-          <!-- FILE UPLOAD BUTTON -->
+
+        <!-- INPUT FORM -->
+
+        <form
+          id="chatForm"
+          class="input-box"
+          autocomplete="off"
+        >
+
+          <!-- FILE BUTTON -->
+
           <button
             id="fileButton"
             class="icon-btn"
@@ -786,10 +1405,21 @@
             aria-label="Attach file"
             title="Attach file"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H9v9.5a3.5 3.5 0 0 0 7 0V5a4 4 0 0 0-8 0v12.5c0 3.03 2.47 5.5 5.5 5.5s5.5-2.47 5.5-5.5V6h-1.5z"/>
+
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H9v9.5a3.5 3.5 0 0 0 7 0V5a4 4 0 0 0-8 0v12.5c0 3.03 2.47 5.5 5.5 5.5s5.5-2.47 5.5-5.5V6h-1.5z"
+              />
             </svg>
+
           </button>
+
+
+          <!-- HIDDEN FILE INPUT -->
+
           <input
             id="fileInput"
             type="file"
@@ -798,7 +1428,9 @@
             multiple
           />
 
-          <!-- TEXT INPUT -->
+
+          <!-- TEXT -->
+
           <textarea
             id="messageInput"
             rows="1"
@@ -808,7 +1440,9 @@
             aria-label="Message"
           ></textarea>
 
-          <!-- VOICE INPUT BUTTON -->
+
+          <!-- VOICE -->
+
           <button
             id="voiceButton"
             class="icon-btn"
@@ -816,149 +1450,410 @@
             aria-label="Voice input"
             title="Voice input"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/>
+
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"
+              />
             </svg>
+
           </button>
 
-          <!-- SEND BUTTON -->
+
+          <!-- SEND -->
+
           <button
             id="sendButton"
             type="submit"
             aria-label="Send message"
+            title="Send message"
           >
+
             <svg
               class="send-icon"
               viewBox="0 0 24 24"
               aria-hidden="true"
             >
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+              <path
+                d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
+              />
             </svg>
+
           </button>
 
         </form>
 
+
         <div class="composer-note">
-          Fly Dragon AI can make mistakes. Verify important visa and travel information.
+          Fly Dragon AI can make mistakes.
+          Verify important visa and travel information.
         </div>
 
       </div>
+
     </footer>
 
   </div>
 
-  <script src="/chat.js" defer></script>
 
-  <!-- INLINE SCRIPT FOR FILE + VOICE UI (add your own backend logic in chat.js) -->
+  <!-- =========================================================
+       MAIN CHAT LOGIC
+  ========================================================== -->
+
+  <script
+    src="/chat.js"
+    defer
+  ></script>
+
+
+  <!-- =========================================================
+       FILE + VOICE UI
+       Does NOT call /api/chat.
+       chat.js owns the actual chat request.
+  ========================================================== -->
+
   <script>
-    (function () {
-      const fileButton = document.getElementById('fileButton');
-      const fileInput = document.getElementById('fileInput');
-      const fileChipContainer = document.getElementById('fileChipContainer');
-      const voiceButton = document.getElementById('voiceButton');
-      const messageInput = document.getElementById('messageInput');
+    (() => {
+      "use strict";
+
+      const fileButton =
+        document.getElementById("fileButton");
+
+      const fileInput =
+        document.getElementById("fileInput");
+
+      const fileChipContainer =
+        document.getElementById(
+          "fileChipContainer"
+        );
+
+      const voiceButton =
+        document.getElementById(
+          "voiceButton"
+        );
+
+      const messageInput =
+        document.getElementById(
+          "messageInput"
+        );
 
       let selectedFiles = [];
 
-      // —————— FILE UPLOAD ——————
-      fileButton.addEventListener('click', () => {
-        fileInput.click();
-      });
+      /* =====================================================
+         FILE UPLOAD UI
+      ====================================================== */
 
-      fileInput.addEventListener('change', () => {
-        selectedFiles = Array.from(fileInput.files);
-        renderFileChips();
-      });
-
-      function renderFileChips() {
-        fileChipContainer.innerHTML = '';
-        selectedFiles.forEach((file, index) => {
-          const chip = document.createElement('div');
-          chip.className = 'file-chip';
-          chip.innerHTML = `
-            <span>📎 ${file.name}</span>
-            <button type="button" data-index="${index}" aria-label="Remove file">×</button>
-          `;
-          chip.querySelector('button').addEventListener('click', (e) => {
-            const i = parseInt(e.target.dataset.index, 10);
-            selectedFiles.splice(i, 1);
-            renderFileChips();
-          });
-          fileChipContainer.appendChild(chip);
-        });
-        // Reset input so the same file can be re-selected if removed
-        if (selectedFiles.length === 0) {
-          fileInput.value = '';
-        }
+      if (fileButton && fileInput) {
+        fileButton.addEventListener(
+          "click",
+          () => {
+            fileInput.click();
+          }
+        );
       }
 
-      // —————— VOICE INPUT ——————
+      if (fileInput) {
+        fileInput.addEventListener(
+          "change",
+          () => {
+            selectedFiles =
+              Array.from(
+                fileInput.files || []
+              );
+
+            renderFileChips();
+          }
+        );
+      }
+
+      function renderFileChips() {
+        if (!fileChipContainer) {
+          return;
+        }
+
+        fileChipContainer.innerHTML = "";
+
+        selectedFiles.forEach(
+          (file, index) => {
+
+            const chip =
+              document.createElement(
+                "div"
+              );
+
+            chip.className =
+              "file-chip";
+
+            const label =
+              document.createElement(
+                "span"
+              );
+
+            label.textContent =
+              `📎 ${file.name}`;
+
+            const removeButton =
+              document.createElement(
+                "button"
+              );
+
+            removeButton.type =
+              "button";
+
+            removeButton.textContent =
+              "×";
+
+            removeButton.setAttribute(
+              "aria-label",
+              `Remove ${file.name}`
+            );
+
+            removeButton.addEventListener(
+              "click",
+              () => {
+                selectedFiles.splice(
+                  index,
+                  1
+                );
+
+                rebuildFileInput();
+                renderFileChips();
+              }
+            );
+
+            chip.appendChild(label);
+            chip.appendChild(
+              removeButton
+            );
+
+            fileChipContainer.appendChild(
+              chip
+            );
+          }
+        );
+      }
+
+      /*
+       * FileList is read-only.
+       * Rebuild the input after removing a file.
+       */
+
+      function rebuildFileInput() {
+        if (!fileInput) {
+          return;
+        }
+
+        const dataTransfer =
+          new DataTransfer();
+
+        selectedFiles.forEach(
+          (file) => {
+            dataTransfer.items.add(
+              file
+            );
+          }
+        );
+
+        fileInput.files =
+          dataTransfer.files;
+      }
+
+      /* =====================================================
+         VOICE INPUT
+      ====================================================== */
+
       let recognition = null;
+
       let isRecording = false;
 
-      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'en-US';
+      const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
 
-        recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          messageInput.value += transcript;
-          messageInput.focus();
-        };
+      if (
+        SpeechRecognition &&
+        voiceButton
+      ) {
+        recognition =
+          new SpeechRecognition();
 
-        recognition.onerror = (event) => {
-          console.warn('Speech recognition error:', event.error);
-          stopRecording();
-        };
+        recognition.continuous =
+          false;
 
-        recognition.onend = () => {
-          stopRecording();
-        };
-      } else {
-        voiceButton.disabled = true;
-        voiceButton.title = 'Voice input not supported in this browser';
+        recognition.interimResults =
+          false;
+
+        recognition.lang =
+          "en-US";
+
+        recognition.onstart =
+          () => {
+            isRecording = true;
+
+            voiceButton.classList.add(
+              "recording"
+            );
+
+            voiceButton.setAttribute(
+              "aria-label",
+              "Stop voice input"
+            );
+
+            voiceButton.setAttribute(
+              "title",
+              "Stop voice input"
+            );
+          };
+
+        recognition.onresult =
+          (event) => {
+            const transcript =
+              event
+                .results?.[0]?.[0]
+                ?.transcript || "";
+
+            if (!transcript) {
+              return;
+            }
+
+            if (
+              messageInput.value.trim()
+            ) {
+              messageInput.value +=
+                " ";
+            }
+
+            messageInput.value +=
+              transcript;
+
+            messageInput.dispatchEvent(
+              new Event(
+                "input",
+                {
+                  bubbles: true
+                }
+              )
+            );
+
+            messageInput.focus();
+          };
+
+        recognition.onerror =
+          (event) => {
+            console.warn(
+              "Fly AI speech recognition error:",
+              event.error
+            );
+
+            stopRecording();
+          };
+
+        recognition.onend =
+          () => {
+            stopRecording();
+          };
+
+      } else if (voiceButton) {
+
+        voiceButton.disabled =
+          true;
+
+        voiceButton.setAttribute(
+          "title",
+          "Voice input is not supported in this browser"
+        );
+
+        voiceButton.setAttribute(
+          "aria-label",
+          "Voice input is not supported"
+        );
       }
 
       function startRecording() {
-        if (!recognition) return;
-        isRecording = true;
-        voiceButton.classList.add('recording');
-        recognition.start();
+        if (
+          !recognition ||
+          isRecording
+        ) {
+          return;
+        }
+
+        try {
+          recognition.start();
+        } catch (error) {
+          console.warn(
+            "Could not start speech recognition:",
+            error
+          );
+        }
       }
 
       function stopRecording() {
         isRecording = false;
-        voiceButton.classList.remove('recording');
-        if (recognition) {
-          try { recognition.stop(); } catch (_) {}
+
+        if (voiceButton) {
+          voiceButton.classList.remove(
+            "recording"
+          );
+
+          voiceButton.setAttribute(
+            "aria-label",
+            "Voice input"
+          );
+
+          voiceButton.setAttribute(
+            "title",
+            "Voice input"
+          );
         }
       }
 
-      voiceButton.addEventListener('click', () => {
-        if (isRecording) {
-          stopRecording();
-        } else {
-          startRecording();
-        }
-      });
+      if (voiceButton) {
+        voiceButton.addEventListener(
+          "click",
+          () => {
 
-      // —————— AUTO-RESIZE TEXTAREA ——————
-      messageInput.addEventListener('input', () => {
-        messageInput.style.height = 'auto';
-        messageInput.style.height = Math.min(messageInput.scrollHeight, 110) + 'px';
-      });
+            if (isRecording) {
 
-      // —————— EXPOSE FILES FOR chat.js ——————
-      window.getSelectedFiles = () => selectedFiles;
-      window.clearSelectedFiles = () => {
-        selectedFiles = [];
-        fileInput.value = '';
-        renderFileChips();
-      };
+              try {
+                recognition.stop();
+              } catch (_) {}
+
+              stopRecording();
+
+            } else {
+
+              startRecording();
+
+            }
+          }
+        );
+      }
+
+      /* =====================================================
+         EXPOSE FILE STATE
+         For future chat.js / upload integration.
+      ====================================================== */
+
+      window.getSelectedFiles =
+        () => [...selectedFiles];
+
+      window.clearSelectedFiles =
+        () => {
+
+          selectedFiles = [];
+
+          if (fileInput) {
+            fileInput.value = "";
+          }
+
+          renderFileChips();
+        };
+
     })();
   </script>
+
 </body>
 </html>
