@@ -3,7 +3,6 @@
  * https://developers.cloudflare.com/workers/wrangler/configuration/
  */
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "dragon-app",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-09-30",
