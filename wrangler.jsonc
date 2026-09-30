@@ -1,11 +1,15 @@
-/**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
-	"name": "dragon-app",
-	"main": "src/index.ts",
-	 "compatibility_date": "2026-09-30",
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  "name": "dragon-app",
+
+  "main": "src/index.ts",
+
+  "compatibility_date": "2026-09-30",
+
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
 
   "ai": {
     "binding": "AI"
@@ -16,11 +20,8 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
-	"observability": {
-		"enabled": true
-	},
-	"ai": {
-		"binding": "AI"
-	},
-	"upload_source_maps": true
+
+  "observability": {
+    "enabled": true
+  }
 }
