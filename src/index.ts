@@ -1,4 +1,5 @@
 /**
+ * ============================================================
  * FLYTRIPVISA
  * Fly 🐉 AI Assistant
  *
@@ -6,38 +7,87 @@
  * Workers AI
  * AI Gateway
  * SSE Streaming
+ * ============================================================
  */
 
 import type {
   AiTextGenerationInput,
 } from "@cloudflare/workers-types";
 
+/**
+ * ============================================================
+ * ENVIRONMENT
+ * ============================================================
+ */
+
 interface Env {
   AI: Ai;
   ASSETS: Fetcher;
 }
 
+/**
+ * ============================================================
+ * CHAT TYPES
+ * ============================================================
+ */
+
+type ChatRole =
+  | "system"
+  | "user"
+  | "assistant";
+
 interface ChatMessage {
-  role: "system" | "user" | "assistant";
+  role: ChatRole;
   content: string;
 }
 
+interface ChatRequestBody {
+  messages?: ChatMessage[];
+}
+
 /**
- * ==========================================
+ * ============================================================
  * AI CONFIGURATION
- * ==========================================
+ * ============================================================
  */
 
+/**
+ * Workers AI model.
+ *
+ * Keep the provider/model name here.
+ * AI Gateway is attached through env.AI.run().
+ */
 const MODEL_ID =
   "@cf/meta/llama-3.1-8b-instruct-fp8";
 
+/**
+ * Your Cloudflare AI Gateway ID.
+ */
 const AI_GATEWAY_ID =
   "ai_dragon";
 
 /**
- * ==========================================
+ * Maximum number of messages accepted
+ * from the browser.
+ *
+ * Prevents accidental huge requests.
+ */
+const MAX_MESSAGES = 50;
+
+/**
+ * Maximum characters per message.
+ */
+const MAX_MESSAGE_LENGTH = 12000;
+
+/**
+ * Maximum total conversation characters.
+ */
+const MAX_TOTAL_CHARS = 60000;
+
+/**
+ * ============================================================
  * SYSTEM PROMPT
- * ==========================================
+ * ============================================================
  */
 
 const SYSTEM_PROMPT = `
@@ -86,29 +136,56 @@ Important rules:
 - Never invent visa fees.
 - Never invent processing times.
 - Never fabricate government policies.
-- When requirements can change, advise the user to verify them with the relevant official embassy, consulate, immigration authority, or government website.
+- When requirements can change, advise the user to verify them with the relevant official embassy, consulate, immigration authority, airline, hotel, or government website.
 
 When the user provides incomplete information, ask for the missing information.
 
 For travel questions, provide practical and easy-to-understand guidance.
 
 For visa questions, clearly distinguish general guidance from official immigration requirements.
+
+When the user asks about FLYTRIPVISA services, explain them clearly without making promises that cannot be verified.
+
+Keep responses concise enough for a mobile chat interface.
 `;
 
 /**
- * ==========================================
+ * ============================================================
+ * CORS
+ * ============================================================
+ */
+
+function corsHeaders(): HeadersInit {
+  return {
+    "access-control-allow-origin": "*",
+
+    "access-control-allow-methods":
+      "GET, POST, OPTIONS",
+
+    "access-control-allow-headers":
+      "Content-Type, Accept",
+
+    "access-control-max-age":
+      "86400",
+  };
+}
+
+/**
+ * ============================================================
  * JSON RESPONSE
- * ==========================================
+ * ============================================================
  */
 
 function jsonResponse(
   data: unknown,
   status = 200,
 ): Response {
+
   return new Response(
     JSON.stringify(data),
     {
       status,
+
       headers: {
         "content-type":
           "application/json; charset=utf-8",
@@ -118,33 +195,289 @@ function jsonResponse(
 
         "x-content-type-options":
           "nosniff",
+
+        ...corsHeaders(),
       },
     },
   );
 }
 
 /**
- * ==========================================
- * CORS
- * ==========================================
+ * ============================================================
+ * ERROR RESPONSE
+ * ============================================================
  */
 
-function corsHeaders(): HeadersInit {
+function errorResponse(
+  message: string,
+  status = 500,
+): Response {
+
+  return jsonResponse(
+    {
+      ok: false,
+      error: message,
+    },
+    status,
+  );
+}
+
+/**
+ * ============================================================
+ * REQUEST VALIDATION
+ * ============================================================
+ */
+
+function isValidRole(
+  role: unknown,
+): role is ChatRole {
+
+  return (
+    role === "user" ||
+    role === "assistant" ||
+    role === "system"
+  );
+}
+
+/**
+ * ============================================================
+ * SANITIZE CHAT
+ * ============================================================
+ *
+ * Important:
+ *
+ * We do NOT trust a browser supplied system prompt.
+ *
+ * Any "system" messages sent by the frontend
+ * are removed.
+ *
+ * Our server-side SYSTEM_PROMPT is authoritative.
+ * ============================================================
+ */
+
+function sanitizeMessages(
+  input: unknown,
+): ChatMessage[] {
+
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  const result: ChatMessage[] = [];
+
+  let totalCharacters = 0;
+
+  for (
+    const item of input
+  ) {
+
+    if (
+      !item ||
+      typeof item !== "object"
+    ) {
+      continue;
+    }
+
+    const message =
+      item as Partial<ChatMessage>;
+
+    /**
+     * Never accept browser-controlled
+     * system messages.
+     */
+    if (
+      message.role === "system"
+    ) {
+      continue;
+    }
+
+    if (
+      message.role !== "user" &&
+      message.role !== "assistant"
+    ) {
+      continue;
+    }
+
+    if (
+      typeof message.content !==
+      "string"
+    ) {
+      continue;
+    }
+
+    const content =
+      message.content.trim();
+
+    if (!content) {
+      continue;
+    }
+
+    if (
+      content.length >
+      MAX_MESSAGE_LENGTH
+    ) {
+      continue;
+    }
+
+    if (
+      totalCharacters +
+        content.length >
+      MAX_TOTAL_CHARS
+    ) {
+      break;
+    }
+
+    result.push({
+      role: message.role,
+      content,
+    });
+
+    totalCharacters +=
+      content.length;
+
+    if (
+      result.length >=
+      MAX_MESSAGES
+    ) {
+      break;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * ============================================================
+ * CREATE AI INPUT
+ * ============================================================
+ */
+
+function createAIInput(
+  messages: ChatMessage[],
+): AiTextGenerationInput & {
+  stream: true;
+} {
+
   return {
-    "access-control-allow-origin": "*",
+    messages: [
+      {
+        role: "system",
+        content: SYSTEM_PROMPT,
+      },
 
-    "access-control-allow-methods":
-      "GET,POST,OPTIONS",
+      ...messages,
+    ],
 
-    "access-control-allow-headers":
-      "Content-Type, Accept",
+    /**
+     * Maximum generated tokens.
+     */
+    max_tokens: 1024,
+
+    /**
+     * IMPORTANT:
+     *
+     * This enables real-time streaming.
+     */
+    stream: true,
   };
 }
 
 /**
- * ==========================================
- * /api/chat
- * ==========================================
+ * ============================================================
+ * SSE HEADERS
+ * ============================================================
+ */
+
+function sseHeaders(): Headers {
+
+  const headers =
+    new Headers();
+
+  headers.set(
+    "content-type",
+    "text/event-stream; charset=utf-8",
+  );
+
+  headers.set(
+    "cache-control",
+    "no-cache, no-transform",
+  );
+
+  headers.set(
+    "connection",
+    "keep-alive",
+  );
+
+  headers.set(
+    "x-accel-buffering",
+    "no",
+  );
+
+  headers.set(
+    "x-content-type-options",
+    "nosniff",
+  );
+
+  const cors =
+    corsHeaders();
+
+  for (
+    const [key, value]
+    of Object.entries(cors)
+  ) {
+    headers.set(
+      key,
+      value,
+    );
+  }
+
+  return headers;
+}
+
+/**
+ * ============================================================
+ * SSE FALLBACK STREAM
+ * ============================================================
+ *
+ * If something fails after the response has started,
+ * send an SSE error event instead of corrupting the stream.
+ * ============================================================
+ */
+
+function createSSEErrorStream(
+  message: string,
+): ReadableStream {
+
+  const encoder =
+    new TextEncoder();
+
+  return new ReadableStream({
+    start(controller) {
+
+      controller.enqueue(
+        encoder.encode(
+          `event: error\n` +
+          `data: ${JSON.stringify({
+            error: message,
+          })}\n\n`,
+        ),
+      );
+
+      controller.enqueue(
+        encoder.encode(
+          "data: [DONE]\n\n",
+        ),
+      );
+
+      controller.close();
+    },
+  });
+}
+
+/**
+ * ============================================================
+ * POST /api/chat
+ * ============================================================
  */
 
 async function handleChatRequest(
@@ -152,108 +485,124 @@ async function handleChatRequest(
   env: Env,
 ): Promise<Response> {
 
+  /**
+   * ----------------------------------------------------------
+   * Parse JSON
+   * ----------------------------------------------------------
+   */
+
+  let body: ChatRequestBody;
+
   try {
 
-    /**
-     * Parse request body
-     */
+    body =
+      await request.json() as
+        ChatRequestBody;
 
-    const body =
-      await request.json() as {
-        messages?: ChatMessage[];
-      };
+  } catch {
 
-    /**
-     * Validate messages
-     */
+    return errorResponse(
+      "Invalid JSON request body.",
+      400,
+    );
+  }
 
-    if (
-      !Array.isArray(
-        body.messages,
-      )
-    ) {
-      return jsonResponse(
-        {
-          error:
-            "messages array is required",
-        },
-        400,
-      );
-    }
+  /**
+   * ----------------------------------------------------------
+   * Validate messages
+   * ----------------------------------------------------------
+   */
 
-    /**
-     * Sanitize messages
-     */
+  if (
+    !Array.isArray(
+      body.messages,
+    )
+  ) {
 
-    const userMessages =
-      body.messages.filter(
-        (message) =>
-          message &&
-          typeof message.content ===
-            "string" &&
-          (
-            message.role === "user" ||
-            message.role === "assistant" ||
-            message.role === "system"
-          ),
-      );
+    return errorResponse(
+      "messages array is required.",
+      400,
+    );
+  }
 
-    /**
-     * Prevent empty requests
-     */
+  /**
+   * ----------------------------------------------------------
+   * Sanitize
+   * ----------------------------------------------------------
+   */
 
-    if (
-      userMessages.length === 0
-    ) {
-      return jsonResponse(
-        {
-          error:
-            "At least one message is required",
-        },
-        400,
-      );
-    }
-
-    /**
-     * Build AI messages
-     */
-
-    const messages: ChatMessage[] = [
-      {
-        role: "system",
-        content:
-          SYSTEM_PROMPT,
-      },
-      ...userMessages,
-    ];
-
-    /**
-     * Workers AI input
-     */
-
-    const inputs = {
-      messages,
-
-      max_tokens: 1024,
-
-      stream: true,
-    } satisfies
-      AiTextGenerationInput & {
-        stream: true;
-      };
-
-    console.log(
-      `[Fly AI] model=${MODEL_ID} gateway=${AI_GATEWAY_ID}`,
+  const messages =
+    sanitizeMessages(
+      body.messages,
     );
 
-    /**
-     * ======================================
-     * WORKERS AI + AI GATEWAY
-     * ======================================
-     */
+  if (
+    messages.length === 0
+  ) {
+
+    return errorResponse(
+      "At least one valid user or assistant message is required.",
+      400,
+    );
+  }
+
+  /**
+   * ----------------------------------------------------------
+   * AI input
+   * ----------------------------------------------------------
+   */
+
+  const inputs =
+    createAIInput(
+      messages,
+    );
+
+  /**
+   * ----------------------------------------------------------
+   * Logging
+   * ----------------------------------------------------------
+   */
+
+  console.log(
+    JSON.stringify({
+      service:
+        "Fly 🐉 AI Assistant",
+
+      model:
+        MODEL_ID,
+
+      gateway:
+        AI_GATEWAY_ID,
+
+      messages:
+        messages.length,
+
+      streaming:
+        true,
+
+      timestamp:
+        new Date().toISOString(),
+    }),
+  );
+
+  /**
+   * ----------------------------------------------------------
+   * Workers AI + AI Gateway
+   * ----------------------------------------------------------
+   *
+   * This is the important part.
+   *
+   * The request is executed through your
+   * AI Gateway "ai_dragon".
+   * ----------------------------------------------------------
+   */
+
+  try {
 
     const stream =
-      await env.AI.run<typeof MODEL_ID>(
+      await env.AI.run<
+        typeof MODEL_ID
+      >(
         MODEL_ID,
         inputs,
         {
@@ -261,9 +610,9 @@ async function handleChatRequest(
             id:
               AI_GATEWAY_ID,
 
-            /*
-             * Real-time chat:
-             * bypass Gateway cache.
+            /**
+             * Do not serve cached responses
+             * for live chat.
              */
             skipCache: true,
           },
@@ -271,124 +620,143 @@ async function handleChatRequest(
       );
 
     /**
-     * Return SSE stream
+     * --------------------------------------------------------
+     * Return streaming response
+     * --------------------------------------------------------
      */
-
-    const headers =
-      new Headers();
-
-    headers.set(
-      "content-type",
-      "text/event-stream; charset=utf-8",
-    );
-
-    headers.set(
-      "cache-control",
-      "no-cache, no-transform",
-    );
-
-    headers.set(
-      "connection",
-      "keep-alive",
-    );
-
-    headers.set(
-      "x-content-type-options",
-      "nosniff",
-    );
-
-    const cors =
-      corsHeaders();
-
-    for (
-      const [key, value]
-      of Object.entries(cors)
-    ) {
-      headers.set(
-        key,
-        value,
-      );
-    }
 
     return new Response(
       stream as ReadableStream,
       {
         status: 200,
-        headers,
+
+        headers:
+          sseHeaders(),
       },
     );
 
   } catch (error) {
 
     console.error(
-      "[Fly AI] /api/chat error:",
+      "[Fly AI] Workers AI / Gateway error:",
       error,
     );
 
     const message =
       error instanceof Error
         ? error.message
-        : "Unknown error";
+        : "Unknown AI error";
 
-    return new Response(
-      JSON.stringify({
+    return jsonResponse(
+      {
+        ok: false,
+
         error:
-          "Failed to process AI request",
+          "AI request failed.",
 
         message,
-      }),
-      {
-        status: 500,
 
-        headers: {
-          "content-type":
-            "application/json; charset=utf-8",
+        model:
+          MODEL_ID,
 
-          "cache-control":
-            "no-store",
-
-          ...corsHeaders(),
-        },
+        gateway:
+          AI_GATEWAY_ID,
       },
+      502,
     );
   }
 }
 
 /**
- * ==========================================
- * API HEALTH
- * ==========================================
+ * ============================================================
+ * HEALTH
+ * ============================================================
  */
 
 function handleHealth(): Response {
 
-  return jsonResponse(
-    {
-      ok: true,
+  return jsonResponse({
+    ok: true,
 
-      service:
-        "Fly 🐉 AI Assistant",
+    service:
+      "Fly 🐉 AI Assistant",
 
-      gateway:
-        AI_GATEWAY_ID,
+    provider:
+      "Cloudflare Workers AI",
 
-      model:
-        MODEL_ID,
+    gateway:
+      AI_GATEWAY_ID,
 
-      endpoint:
-        "/api/chat",
+    model:
+      MODEL_ID,
 
-      timestamp:
-        new Date().toISOString(),
+    streaming:
+      true,
+
+    endpoints: {
+      chat:
+        "POST /api/chat",
+
+      health:
+        "GET /api/health",
     },
-    200,
-  );
+
+    timestamp:
+      new Date().toISOString(),
+  });
 }
 
 /**
- * ==========================================
+ * ============================================================
+ * CHAT INFO
+ * ============================================================
+ */
+
+function handleChatInfo(): Response {
+
+  return jsonResponse({
+    ok: true,
+
+    service:
+      "Fly 🐉 AI Assistant",
+
+    endpoint:
+      "/api/chat",
+
+    method:
+      "POST",
+
+    contentType:
+      "application/json",
+
+    streaming:
+      true,
+
+    protocol:
+      "Server-Sent Events",
+
+    gateway:
+      AI_GATEWAY_ID,
+
+    model:
+      MODEL_ID,
+
+    example: {
+      messages: [
+        {
+          role: "user",
+          content:
+            "I want to apply for a Japan visa.",
+        },
+      ],
+    },
+  });
+}
+
+/**
+ * ============================================================
  * MAIN WORKER
- * ==========================================
+ * ============================================================
  */
 
 export default {
@@ -400,16 +768,21 @@ export default {
   ): Promise<Response> {
 
     const url =
-      new URL(request.url);
+      new URL(
+        request.url,
+      );
 
     /**
-     * OPTIONS
+     * --------------------------------------------------------
+     * CORS PREFLIGHT
+     * --------------------------------------------------------
      */
 
     if (
       request.method ===
       "OPTIONS"
     ) {
+
       return new Response(
         null,
         {
@@ -422,7 +795,9 @@ export default {
     }
 
     /**
+     * --------------------------------------------------------
      * POST /api/chat
+     * --------------------------------------------------------
      */
 
     if (
@@ -431,6 +806,7 @@ export default {
       request.method ===
         "POST"
     ) {
+
       return handleChatRequest(
         request,
         env,
@@ -438,9 +814,9 @@ export default {
     }
 
     /**
+     * --------------------------------------------------------
      * GET /api/chat
-     *
-     * Useful for testing.
+     * --------------------------------------------------------
      */
 
     if (
@@ -449,27 +825,14 @@ export default {
       request.method ===
         "GET"
     ) {
-      return jsonResponse(
-        {
-          ok: true,
 
-          endpoint:
-            "/api/chat",
-
-          method:
-            "POST",
-
-          gateway:
-            AI_GATEWAY_ID,
-
-          model:
-            MODEL_ID,
-        },
-      );
+      return handleChatInfo();
     }
 
     /**
+     * --------------------------------------------------------
      * GET /api/health
+     * --------------------------------------------------------
      */
 
     if (
@@ -478,12 +841,14 @@ export default {
       request.method ===
         "GET"
     ) {
+
       return handleHealth();
     }
 
     /**
-     * Everything else:
-     * serve frontend.
+     * --------------------------------------------------------
+     * Frontend
+     * --------------------------------------------------------
      */
 
     return env.ASSETS.fetch(
