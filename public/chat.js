@@ -1,20 +1,44 @@
+/**
+ * ============================================================
+ * FLYTRIPVISA
+ * Fly 🐉 AI Assistant
+ *
+ * Real-time chat client
+ * Cloudflare Workers AI
+ * AI Gateway
+ * SSE streaming
+ * ============================================================
+ */
+
 (() => {
   "use strict";
 
-  /*
-   * ==========================================
-   * FLYTRIPVISA
-   * Fly 🐉 AI Assistant
-   *
-   * Frontend endpoint:
-   * POST /api/chat
-   * ==========================================
-   */
+  /* ==========================================================
+     CONFIG
+  ========================================================== */
 
   const API_ENDPOINT = "/api/chat";
 
   const STORAGE_KEY =
     "flydragon-chat-history";
+
+  const MAX_HISTORY = 50;
+
+  /* ==========================================================
+     DOM
+  ========================================================== */
+
+  const chatArea =
+    document.getElementById("chatArea");
+
+  const messagesContainer =
+    document.getElementById("messages");
+
+  const welcome =
+    document.getElementById("welcome");
+
+  const quickPrompts =
+    document.getElementById("quickPrompts");
 
   const chatForm =
     document.getElementById("chatForm");
@@ -25,148 +49,173 @@
   const sendButton =
     document.getElementById("sendButton");
 
-  const messages =
-    document.getElementById("messages");
-
-  const chatArea =
-    document.getElementById("chatArea");
-
-  const welcome =
-    document.getElementById("welcome");
-
-  const quickPrompts =
-    document.getElementById("quickPrompts");
-
   const newChatButton =
     document.getElementById("newChatButton");
 
-  let conversation = [];
+  /* ==========================================================
+     STATE
+  ========================================================== */
+
+  let messages = [];
 
   let isStreaming = false;
 
+  let abortController = null;
+
+  /* ==========================================================
+     INITIALIZE
+  ========================================================== */
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+      loadHistory();
+
+      setupEvents();
+
+      autoResize();
+
+      updateUI();
+    }
+  );
+
   /*
-   * ==========================================
-   * INITIALIZE
-   * ==========================================
+   * Because this script is loaded with defer,
+   * DOMContentLoaded should still fire normally.
+   * But initialize immediately as a fallback.
    */
 
-  function init() {
+  if (
+    document.readyState ===
+    "interactive" ||
+    document.readyState ===
+    "complete"
+  ) {
+    initialize();
+  }
+
+  let initialized = false;
+
+  function initialize() {
+    if (initialized) {
+      return;
+    }
+
+    initialized = true;
+
     loadHistory();
 
     setupEvents();
 
     autoResize();
 
-    if (conversation.length > 0) {
-      hideWelcome();
-
-      renderHistory();
-    }
+    updateUI();
   }
 
-  /*
-   * ==========================================
-   * EVENTS
-   * ==========================================
-   */
+  /* ==========================================================
+     EVENTS
+  ========================================================== */
 
   function setupEvents() {
-    if (
-      !chatForm ||
-      !messageInput ||
-      !sendButton ||
-      !messages
-    ) {
-      console.error(
-        "Fly AI: Required chat elements are missing."
-      );
 
-      return;
-    }
+    /* --------------------------------------------------------
+       Chat form
+    -------------------------------------------------------- */
 
-    /*
-     * Submit
-     */
+    if (chatForm) {
+      chatForm.addEventListener(
+        "submit",
+        async (event) => {
 
-    chatForm.addEventListener(
-      "submit",
-      async (event) => {
-        event.preventDefault();
-
-        if (isStreaming) {
-          return;
-        }
-
-        const text =
-          messageInput.value.trim();
-
-        if (!text) {
-          return;
-        }
-
-        await sendMessage(text);
-      }
-    );
-
-    /*
-     * Auto resize
-     */
-
-    messageInput.addEventListener(
-      "input",
-      autoResize
-    );
-
-    /*
-     * Enter = send
-     * Shift + Enter = new line
-     */
-
-    messageInput.addEventListener(
-      "keydown",
-      (event) => {
-        if (
-          event.key === "Enter" &&
-          !event.shiftKey
-        ) {
           event.preventDefault();
 
-          if (!isStreaming) {
-            chatForm.requestSubmit();
-          }
+          await sendMessage();
         }
-      }
-    );
-
-    /*
-     * New chat
-     */
-
-    if (newChatButton) {
-      newChatButton.addEventListener(
-        "click",
-        newChat
       );
     }
 
-    /*
-     * Quick prompts
-     */
+    /* --------------------------------------------------------
+       Enter to send
+       Shift + Enter = newline
+    -------------------------------------------------------- */
 
-    document
-      .querySelectorAll("[data-prompt]")
-      .forEach((button) => {
-        button.addEventListener(
-          "click",
-          () => {
-            const prompt =
-              button.dataset.prompt ||
-              "";
+    if (messageInput) {
 
-            if (!prompt) {
-              return;
+      messageInput.addEventListener(
+        "keydown",
+        (event) => {
+
+          if (
+            event.key === "Enter" &&
+            !event.shiftKey &&
+            !event.isComposing
+          ) {
+
+            event.preventDefault();
+
+            if (!isStreaming) {
+              sendMessage();
             }
+          }
+        }
+      );
 
+      messageInput.addEventListener(
+        "input",
+        () => {
+          autoResize();
+        }
+      );
+    }
+
+    /* --------------------------------------------------------
+       New chat
+    -------------------------------------------------------- */
+
+    if (newChatButton) {
+
+      newChatButton.addEventListener(
+        "click",
+        () => {
+
+          if (isStreaming) {
+            stopStreaming();
+          }
+
+          startNewChat();
+        }
+      );
+    }
+
+    /* --------------------------------------------------------
+       Quick prompts
+    -------------------------------------------------------- */
+
+    if (quickPrompts) {
+
+      quickPrompts.addEventListener(
+        "click",
+        (event) => {
+
+          const button =
+            event.target.closest(
+              "[data-prompt]"
+            );
+
+          if (!button) {
+            return;
+          }
+
+          const prompt =
+            button.getAttribute(
+              "data-prompt"
+            );
+
+          if (!prompt) {
+            return;
+          }
+
+          if (messageInput) {
             messageInput.value =
               prompt;
 
@@ -174,449 +223,374 @@
 
             messageInput.focus();
           }
-        );
-      });
+
+          sendMessage();
+        }
+      );
+    }
   }
 
-  /*
-   * ==========================================
-   * SEND MESSAGE
-   * ==========================================
-   */
+  /* ==========================================================
+     SEND MESSAGE
+  ========================================================== */
 
-  async function sendMessage(text) {
+  async function sendMessage() {
+
     if (isStreaming) {
       return;
     }
 
-    isStreaming = true;
+    if (!messageInput) {
+      return;
+    }
 
-    setLoading(true);
+    const text =
+      messageInput.value.trim();
 
-    hideWelcome();
+    if (!text) {
+      return;
+    }
 
-    /*
-     * Add user message to UI
-     */
+    /* --------------------------------------------------------
+       User message
+    -------------------------------------------------------- */
 
-    addMessage(
-      "user",
-      text
-    );
-
-    /*
-     * Add user message to
-     * conversation history
-     */
-
-    conversation.push({
+    const userMessage = {
       role: "user",
-      content: text,
-    });
+      content: text
+    };
+
+    messages.push(userMessage);
 
     saveHistory();
 
-    /*
-     * Clear input
-     */
+    renderMessage(
+      userMessage
+    );
+
+    /* --------------------------------------------------------
+       Clear input
+    -------------------------------------------------------- */
 
     messageInput.value = "";
 
     autoResize();
 
-    /*
-     * Create empty assistant message
-     */
+    updateUI();
 
-    const assistantMessage =
-      createMessageElement(
-        "assistant"
-      );
+    /* --------------------------------------------------------
+       Hide welcome
+    -------------------------------------------------------- */
 
-    messages.appendChild(
-      assistantMessage.container
+    hideWelcome();
+
+    /* --------------------------------------------------------
+       Assistant placeholder
+    -------------------------------------------------------- */
+
+    const assistantMessage = {
+      role: "assistant",
+      content: ""
+    };
+
+    messages.push(
+      assistantMessage
     );
 
-    const contentElement =
-      assistantMessage.content;
+    const assistantElement =
+      createAssistantMessageElement();
 
-    scrollToBottom();
+    /* --------------------------------------------------------
+       Start streaming
+    -------------------------------------------------------- */
+
+    isStreaming = true;
+
+    abortController =
+      new AbortController();
+
+    updateUI();
 
     try {
-      /*
-       * ======================================
-       * POST /api/chat
-       * ======================================
-       *
-       * AI Gateway is NOT called from here.
-       *
-       * Browser
-       *   ↓
-       * /api/chat
-       *   ↓
-       * Worker
-       *   ↓
-       * env.AI.run()
-       *   ↓
-       * AI Gateway
-       *   ↓
-       * Workers AI
-       */
 
-      const response =
-        await fetch(
-          API_ENDPOINT,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-
-              "Accept":
-                "text/event-stream",
-            },
-
-            body: JSON.stringify({
-              messages:
-                conversation,
-            }),
-          }
-        );
-
-      /*
-       * HTTP error
-       */
-
-      if (!response.ok) {
-        let errorMessage = "";
-
-        try {
-          const contentType =
-            response.headers.get(
-              "content-type"
-            ) || "";
-
-          if (
-            contentType.includes(
-              "application/json"
-            )
-          ) {
-            const errorData =
-              await response.json();
-
-            errorMessage =
-              errorData.message ||
-              errorData.error ||
-              "";
-          } else {
-            errorMessage =
-              await response.text();
-          }
-        } catch {
-          errorMessage = "";
-        }
-
-        throw new Error(
-          errorMessage ||
-            `Request failed with status ${response.status}`
-        );
-      }
-
-      /*
-       * Streaming support
-       */
-
-      if (!response.body) {
-        throw new Error(
-          "Streaming response is not available."
-        );
-      }
-
-      /*
-       * Read stream
-       */
-
-      const reader =
-        response.body.getReader();
-
-      const decoder =
-        new TextDecoder(
-          "utf-8"
-        );
-
-      let buffer = "";
-
-      let assistantText = "";
-
-      /*
-       * ======================================
-       * STREAM LOOP
-       * ======================================
-       */
-
-      while (true) {
-        const {
-          value,
-          done,
-        } = await reader.read();
-
-        if (done) {
-          break;
-        }
-
-        /*
-         * Decode incoming bytes
-         */
-
-        buffer +=
-          decoder.decode(
-            value,
-            {
-              stream: true,
-            }
-          );
-
-        /*
-         * Parse SSE
-         */
-
-        const parsed =
-          processSSEBuffer(
-            buffer
-          );
-
-        buffer =
-          parsed.remaining;
-
-        /*
-         * Process events
-         */
-
-        for (
-          const event
-          of parsed.events
-        ) {
-          const token =
-            extractToken(
-              event
-            );
-
-          if (
-            token === null
-          ) {
-            continue;
-          }
-
-          if (
-            token === "[DONE]"
-          ) {
-            continue;
-          }
-
-          /*
-           * Append token
-           */
-
-          assistantText +=
-            token;
-
-          /*
-           * Update UI
-           */
-
-          contentElement.textContent =
-            assistantText;
-
-          scrollToBottom();
-        }
-      }
-
-      /*
-       * Flush TextDecoder
-       */
-
-      buffer +=
-        decoder.decode();
-
-      /*
-       * Process remaining SSE
-       */
-
-      if (buffer.trim()) {
-        const finalParsed =
-          processSSEBuffer(
-            buffer
-          );
-
-        for (
-          const event
-          of finalParsed.events
-        ) {
-          const token =
-            extractToken(
-              event
-            );
-
-          if (
-            token !== null &&
-            token !== "[DONE]"
-          ) {
-            assistantText +=
-              token;
-          }
-        }
-      }
-
-      /*
-       * Empty response protection
-       */
-
-      if (
-        !assistantText.trim()
-      ) {
-        assistantText =
-          "I couldn't generate a response right now. Please try again.";
-      }
-
-      /*
-       * Final UI update
-       */
-
-      contentElement.textContent =
-        assistantText;
-
-      /*
-       * Save assistant response
-       */
-
-      conversation.push({
-        role: "assistant",
-        content:
-          assistantText,
-      });
+      await streamChat(
+        assistantElement,
+        assistantMessage
+      );
 
       saveHistory();
 
-      scrollToBottom();
-
     } catch (error) {
+
       console.error(
-        "Fly 🐉 AI error:",
+        "[Fly AI] Chat error:",
         error
       );
 
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Something went wrong.";
+      /*
+       * Remove empty assistant placeholder
+       * if the request failed before any output.
+       */
 
-      contentElement.textContent =
-        `Sorry, I couldn't process your request.\n\n${errorMessage}`;
-
-    } finally {
-      isStreaming = false;
-
-      setLoading(false);
-
-      messageInput.focus();
-    }
-  }
-
-  /*
-   * ==========================================
-   * SSE BUFFER PARSER
-   * ==========================================
-   */
-
-  function processSSEBuffer(
-    buffer
-  ) {
-    const events = [];
-
-    /*
-     * Normalize CRLF
-     */
-
-    const normalized =
-      buffer.replace(
-        /\r\n/g,
-        "\n"
-      );
-
-    /*
-     * Also normalize old CR
-     */
-
-    const clean =
-      normalized.replace(
-        /\r/g,
-        "\n"
-      );
-
-    /*
-     * SSE events are separated
-     * by a blank line.
-     */
-
-    const chunks =
-      clean.split("\n\n");
-
-    /*
-     * Last chunk may be incomplete.
-     */
-
-    const remaining =
-      chunks.pop() || "";
-
-    for (
-      const chunk
-      of chunks
-    ) {
       if (
-        !chunk.trim()
+        !assistantMessage.content
       ) {
-        continue;
+
+        assistantElement
+          ?.remove();
+
+        messages =
+          messages.filter(
+            (message) =>
+              message !==
+              assistantMessage
+          );
+
+        showError(
+          getErrorMessage(error)
+        );
+
+      } else {
+
+        assistantMessage.content +=
+          "\n\n⚠️ Connection interrupted.";
+
       }
 
-      events.push(
-        chunk
+      saveHistory();
+
+    } finally {
+
+      isStreaming = false;
+
+      abortController = null;
+
+      updateUI();
+
+      scrollToBottom();
+    }
+  }
+
+  /* ==========================================================
+     STREAM CHAT
+  ========================================================== */
+
+  async function streamChat(
+    assistantElement,
+    assistantMessage
+  ) {
+
+    const response =
+      await fetch(
+        API_ENDPOINT,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            "Accept":
+              "text/event-stream"
+          },
+
+          body: JSON.stringify({
+            messages:
+              messages
+                .filter(
+                  (message) =>
+                    message.role ===
+                      "user" ||
+                    message.role ===
+                      "assistant"
+                )
+                .map(
+                  (message) => ({
+                    role:
+                      message.role,
+
+                    content:
+                      message.content
+                  })
+                )
+          }),
+
+          signal:
+            abortController.signal
+        }
+      );
+
+    /* --------------------------------------------------------
+       HTTP errors
+    -------------------------------------------------------- */
+
+    if (!response.ok) {
+
+      let errorMessage =
+        `HTTP ${response.status}`;
+
+      try {
+
+        const data =
+          await response.json();
+
+        if (data?.message) {
+          errorMessage =
+            data.message;
+        }
+
+        if (data?.error) {
+          errorMessage =
+            data.error;
+        }
+
+      } catch (_) {}
+
+      throw new Error(
+        errorMessage
       );
     }
 
-    return {
-      events,
-      remaining,
-    };
-  }
+    if (!response.body) {
 
-  /*
-   * ==========================================
-   * EXTRACT TOKEN
-   * ==========================================
-   */
+      throw new Error(
+        "Streaming response body is unavailable."
+      );
+    }
 
-  function extractToken(
-    event
-  ) {
-    const lines =
-      event.split("\n");
+    /* --------------------------------------------------------
+       Create reader
+    -------------------------------------------------------- */
 
-    const dataLines = [];
+    const reader =
+      response.body.getReader();
+
+    const decoder =
+      new TextDecoder(
+        "utf-8"
+      );
+
+    let buffer = "";
+
+    /* --------------------------------------------------------
+       Read stream
+    -------------------------------------------------------- */
+
+    while (true) {
+
+      const {
+        value,
+        done
+      } =
+        await reader.read();
+
+      if (done) {
+        break;
+      }
+
+      buffer +=
+        decoder.decode(
+          value,
+          {
+            stream: true
+          }
+        );
+
+      /*
+       * SSE events are separated by
+       * a blank line.
+       */
+
+      const events =
+        buffer.split(
+          /\r?\n\r?\n/
+        );
+
+      /*
+       * Keep incomplete event.
+       */
+
+      buffer =
+        events.pop() || "";
+
+      for (
+        const event
+        of events
+      ) {
+
+        processSSEEvent(
+          event,
+          assistantElement,
+          assistantMessage
+        );
+      }
+
+      scrollToBottom();
+    }
 
     /*
-     * Extract SSE data lines
+     * Flush decoder.
      */
+
+    buffer +=
+      decoder.decode();
+
+    if (buffer.trim()) {
+
+      processSSEEvent(
+        buffer,
+        assistantElement,
+        assistantMessage
+      );
+    }
+  }
+
+  /* ==========================================================
+     PROCESS SSE
+  ========================================================== */
+
+  function processSSEEvent(
+    event,
+    assistantElement,
+    assistantMessage
+  ) {
+
+    if (!event) {
+      return;
+    }
+
+    const lines =
+      event.split(
+        /\r?\n/
+      );
+
+    let eventType =
+      "message";
+
+    const dataLines = [];
 
     for (
       const line
       of lines
     ) {
+
       if (
+        line.startsWith(
+          "event:"
+        )
+      ) {
+
+        eventType =
+          line
+            .slice(6)
+            .trim();
+
+      } else if (
         line.startsWith(
           "data:"
         )
       ) {
+
         dataLines.push(
           line
             .slice(5)
@@ -625,41 +599,119 @@
       }
     }
 
-    /*
-     * No data
-     */
-
     if (
       dataLines.length === 0
     ) {
-      return null;
+      return;
     }
 
     const data =
       dataLines.join("\n");
 
-    /*
-     * Done
-     */
+    /* --------------------------------------------------------
+       DONE
+    -------------------------------------------------------- */
 
     if (
       data === "[DONE]"
     ) {
-      return "[DONE]";
+      return;
+    }
+
+    /* --------------------------------------------------------
+       Error event
+    -------------------------------------------------------- */
+
+    if (
+      eventType === "error"
+    ) {
+
+      let message =
+        "AI streaming error.";
+
+      try {
+
+        const parsed =
+          JSON.parse(data);
+
+        message =
+          parsed.error ||
+          parsed.message ||
+          message;
+
+      } catch (_) {
+
+        if (data) {
+          message = data;
+        }
+      }
+
+      throw new Error(
+        message
+      );
+    }
+
+    /* --------------------------------------------------------
+       Parse data
+    -------------------------------------------------------- */
+
+    const text =
+      extractTextFromSSEData(
+        data
+      );
+
+    if (!text) {
+      return;
+    }
+
+    /* --------------------------------------------------------
+       Append
+    -------------------------------------------------------- */
+
+    assistantMessage.content +=
+      text;
+
+    updateAssistantElement(
+      assistantElement,
+      assistantMessage.content
+    );
+  }
+
+  /* ==========================================================
+     EXTRACT TEXT
+  ========================================================== */
+
+  function extractTextFromSSEData(
+    data
+  ) {
+
+    if (!data) {
+      return "";
     }
 
     /*
-     * ======================================
-     * JSON RESPONSE
-     * ======================================
+     * Plain text
+     */
+
+    if (
+      !data.startsWith("{") &&
+      !data.startsWith("[")
+    ) {
+      return data;
+    }
+
+    /*
+     * JSON
      */
 
     try {
+
       const parsed =
         JSON.parse(data);
 
       /*
-       * JSON string
+       * Common Workers AI
+       * streaming format.
        */
 
       if (
@@ -669,11 +721,6 @@
         return parsed;
       }
 
-      /*
-       * Workers AI:
-       * { response: "..." }
-       */
-
       if (
         typeof parsed.response ===
         "string"
@@ -681,22 +728,12 @@
         return parsed.response;
       }
 
-      /*
-       * Generic:
-       * { text: "..." }
-       */
-
       if (
         typeof parsed.text ===
         "string"
       ) {
         return parsed.text;
       }
-
-      /*
-       * Generic:
-       * { content: "..." }
-       */
 
       if (
         typeof parsed.content ===
@@ -706,126 +743,61 @@
       }
 
       /*
-       * Generic:
-       * { token: "..." }
+       * OpenAI-compatible format.
        */
 
+      const delta =
+        parsed
+          ?.choices?.[0]
+          ?.delta
+          ?.content;
+
       if (
-        typeof parsed.token ===
+        typeof delta ===
         "string"
       ) {
-        return parsed.token;
+        return delta;
       }
 
-      /*
-       * Nested:
-       * { response: { text: "..." } }
-       */
+      const choiceText =
+        parsed
+          ?.choices?.[0]
+          ?.text;
 
       if (
-        parsed.response &&
-        typeof parsed.response ===
-          "object" &&
-        typeof parsed.response.text ===
-          "string"
+        typeof choiceText ===
+        "string"
       ) {
-        return parsed.response.text;
+        return choiceText;
       }
 
-      /*
-       * OpenAI-compatible:
-       * choices[].delta.content
-       */
+      return "";
 
-      if (
-        Array.isArray(
-          parsed.choices
-        ) &&
-        parsed.choices.length > 0
-      ) {
-        const choice =
-          parsed.choices[0];
-
-        if (
-          choice.delta &&
-          typeof choice.delta.content ===
-            "string"
-        ) {
-          return (
-            choice.delta.content
-          );
-        }
-
-        if (
-          choice.message &&
-          typeof choice.message.content ===
-            "string"
-        ) {
-          return (
-            choice.message.content
-          );
-        }
-
-        if (
-          typeof choice.text ===
-            "string"
-        ) {
-          return choice.text;
-        }
-      }
+    } catch (_) {
 
       /*
-       * Unknown JSON structure.
-       */
-
-      return null;
-
-    } catch {
-      /*
-       * Plain text SSE:
-       *
-       * data: hello
+       * If a provider returns raw text
+       * that happens to start with {,
+       * don't crash the stream.
        */
 
       return data;
     }
   }
 
-  /*
-   * ==========================================
-   * MESSAGE UI
-   * ==========================================
-   */
+  /* ==========================================================
+     CREATE ASSISTANT MESSAGE
+  ========================================================== */
 
-  function addMessage(
-    role,
-    text
-  ) {
-    const element =
-      createMessageElement(
-        role
-      );
+  function createAssistantMessageElement() {
 
-    element.content.textContent =
-      text;
-
-    messages.appendChild(
-      element.container
-    );
-
-    scrollToBottom();
-  }
-
-  function createMessageElement(
-    role
-  ) {
-    const container =
+    const wrapper =
       document.createElement(
-        "div"
+        "article"
       );
 
-    container.className =
-      `message ${role}`;
+    wrapper.className =
+      "message assistant";
 
     const avatar =
       document.createElement(
@@ -836,9 +808,12 @@
       "message-avatar";
 
     avatar.textContent =
-      role === "assistant"
-        ? "F"
-        : "You";
+      "🐉";
+
+    avatar.setAttribute(
+      "aria-hidden",
+      "true"
+    );
 
     const content =
       document.createElement(
@@ -848,166 +823,359 @@
     content.className =
       "message-content";
 
-    if (
-      role === "assistant"
-    ) {
-      container.appendChild(
-        avatar
-      );
+    /*
+     * Typing indicator while
+     * waiting for first token.
+     */
 
-      container.appendChild(
-        content
-      );
-    } else {
-      container.appendChild(
-        content
-      );
+    content.innerHTML =
+      createTypingIndicator();
 
-      container.appendChild(
-        avatar
-      );
-    }
+    wrapper.appendChild(
+      avatar
+    );
 
-    return {
-      container,
-      content,
-    };
+    wrapper.appendChild(
+      content
+    );
+
+    messagesContainer.appendChild(
+      wrapper
+    );
+
+    scrollToBottom();
+
+    return wrapper;
   }
 
-  /*
-   * ==========================================
-   * CHAT HISTORY
-   * ==========================================
-   */
+  /* ==========================================================
+     UPDATE ASSISTANT
+  ========================================================== */
 
-  function saveHistory() {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(
-          conversation
-        )
-      );
-    } catch (error) {
-      console.warn(
-        "Could not save chat history:",
-        error
-      );
-    }
-  }
+  function updateAssistantElement(
+    element,
+    text
+  ) {
 
-  function loadHistory() {
-    try {
-      const saved =
-        localStorage.getItem(
-          STORAGE_KEY
-        );
-
-      if (!saved) {
-        return;
-      }
-
-      const parsed =
-        JSON.parse(saved);
-
-      if (
-        !Array.isArray(parsed)
-      ) {
-        return;
-      }
-
-      conversation =
-        parsed.filter(
-          (message) =>
-            message &&
-            (
-              message.role ===
-                "user" ||
-              message.role ===
-                "assistant"
-            ) &&
-            typeof message.content ===
-              "string"
-        );
-
-    } catch (error) {
-      console.warn(
-        "Could not load chat history:",
-        error
-      );
-
-      conversation = [];
-    }
-  }
-
-  function renderHistory() {
-    messages.innerHTML = "";
-
-    for (
-      const message
-      of conversation
-    ) {
-      addMessage(
-        message.role,
-        message.content
-      );
-    }
-  }
-
-  /*
-   * ==========================================
-   * NEW CHAT
-   * ==========================================
-   */
-
-  function newChat() {
-    if (isStreaming) {
+    if (!element) {
       return;
     }
 
-    conversation = [];
+    const content =
+      element.querySelector(
+        ".message-content"
+      );
 
-    try {
-      localStorage.removeItem(
-        STORAGE_KEY
-      );
-    } catch (error) {
-      console.warn(
-        "Could not clear chat history:",
-        error
-      );
+    if (!content) {
+      return;
     }
 
-    messages.innerHTML = "";
+    /*
+     * We intentionally use textContent
+     * instead of innerHTML.
+     *
+     * This prevents AI output from
+     * injecting HTML/JS into the page.
+     */
 
-    if (welcome) {
-      welcome.classList.remove(
-        "hidden"
-      );
-    }
+    content.textContent =
+      text || "";
 
-    if (quickPrompts) {
-      quickPrompts.classList.remove(
-        "hidden"
-      );
-    }
+    /*
+     * Preserve newlines.
+     */
 
-    messageInput.value = "";
-
-    autoResize();
-
-    messageInput.focus();
+    content.style.whiteSpace =
+      "pre-wrap";
 
     scrollToBottom();
   }
 
-  /*
-   * ==========================================
-   * WELCOME
-   * ==========================================
-   */
+  /* ==========================================================
+     RENDER USER MESSAGE
+  ========================================================== */
+
+  function renderMessage(
+    message
+  ) {
+
+    if (
+      !messagesContainer
+    ) {
+      return;
+    }
+
+    const wrapper =
+      document.createElement(
+        "article"
+      );
+
+    wrapper.className =
+      `message ${message.role}`;
+
+    const avatar =
+      document.createElement(
+        "div"
+      );
+
+    avatar.className =
+      "message-avatar";
+
+    avatar.textContent =
+      message.role ===
+      "user"
+        ? "You"
+        : "🐉";
+
+    const content =
+      document.createElement(
+        "div"
+      );
+
+    content.className =
+      "message-content";
+
+    content.textContent =
+      message.content;
+
+    content.style.whiteSpace =
+      "pre-wrap";
+
+    wrapper.appendChild(
+      avatar
+    );
+
+    wrapper.appendChild(
+      content
+    );
+
+    messagesContainer.appendChild(
+      wrapper
+    );
+
+    scrollToBottom();
+  }
+
+  /* ==========================================================
+     RENDER ALL
+  ========================================================== */
+
+  function renderAllMessages() {
+
+    if (
+      !messagesContainer
+    ) {
+      return;
+    }
+
+    messagesContainer.innerHTML =
+      "";
+
+    for (
+      const message
+      of messages
+    ) {
+
+      if (
+        !message.content
+      ) {
+        continue;
+      }
+
+      renderMessage(
+        message
+      );
+    }
+  }
+
+  /* ==========================================================
+     TYPING
+  ========================================================== */
+
+  function createTypingIndicator() {
+
+    return `
+      <div class="typing" aria-label="Fly AI is thinking">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    `;
+  }
+
+  /* ==========================================================
+     UI
+  ========================================================== */
+
+  function updateUI() {
+
+    if (sendButton) {
+
+      sendButton.disabled =
+        isStreaming ||
+        !messageInput ||
+        !messageInput.value.trim();
+
+    }
+
+    if (messageInput) {
+
+      messageInput.disabled =
+        isStreaming;
+
+    }
+
+    /*
+     * While streaming, the send button
+     * becomes a stop button.
+     */
+
+    if (sendButton) {
+
+      if (isStreaming) {
+
+        sendButton.title =
+          "Stop response";
+
+        sendButton.setAttribute(
+          "aria-label",
+          "Stop response"
+        );
+
+        sendButton.innerHTML = `
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <rect
+              x="7"
+              y="7"
+              width="10"
+              height="10"
+              rx="1"
+            ></rect>
+          </svg>
+        `;
+
+        /*
+         * Enable stop button.
+         */
+
+        sendButton.disabled =
+          false;
+
+      } else {
+
+        sendButton.title =
+          "Send message";
+
+        sendButton.setAttribute(
+          "aria-label",
+          "Send message"
+        );
+
+        sendButton.innerHTML = `
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
+            />
+          </svg>
+        `;
+
+      }
+    }
+  }
+
+  /* ==========================================================
+     SEND BUTTON STOP
+  ========================================================== */
+
+  if (sendButton) {
+
+    sendButton.addEventListener(
+      "click",
+      (event) => {
+
+        if (!isStreaming) {
+          return;
+        }
+
+        event.preventDefault();
+
+        stopStreaming();
+      }
+    );
+  }
+
+  /* ==========================================================
+     STOP STREAMING
+  ========================================================== */
+
+  function stopStreaming() {
+
+    if (!isStreaming) {
+      return;
+    }
+
+    try {
+
+      abortController?.abort();
+
+    } catch (_) {}
+
+    isStreaming =
+      false;
+
+    abortController =
+      null;
+
+    saveHistory();
+
+    updateUI();
+  }
+
+  /* ==========================================================
+     NEW CHAT
+  ========================================================== */
+
+  function startNewChat() {
+
+    messages = [];
+
+    saveHistory();
+
+    if (messagesContainer) {
+      messagesContainer.innerHTML =
+        "";
+    }
+
+    showWelcome();
+
+    if (messageInput) {
+
+      messageInput.value =
+        "";
+
+      messageInput.focus();
+
+    }
+
+    autoResize();
+
+    updateUI();
+
+    scrollToBottom();
+  }
+
+  /* ==========================================================
+     WELCOME
+  ========================================================== */
 
   function hideWelcome() {
+
     if (welcome) {
       welcome.classList.add(
         "hidden"
@@ -1021,44 +1189,194 @@
     }
   }
 
-  /*
-   * ==========================================
-   * LOADING STATE
-   * ==========================================
-   */
+  function showWelcome() {
 
-  function setLoading(
-    loading
-  ) {
-    if (sendButton) {
-      sendButton.disabled =
-        loading;
-
-      if (loading) {
-        sendButton.setAttribute(
-          "aria-busy",
-          "true"
-        );
-      } else {
-        sendButton.removeAttribute(
-          "aria-busy"
-        );
-      }
+    if (welcome) {
+      welcome.classList.remove(
+        "hidden"
+      );
     }
 
-    if (messageInput) {
-      messageInput.disabled =
-        loading;
+    if (quickPrompts) {
+      quickPrompts.classList.remove(
+        "hidden"
+      );
     }
   }
 
-  /*
-   * ==========================================
-   * TEXTAREA AUTO RESIZE
-   * ==========================================
-   */
+  /* ==========================================================
+     HISTORY
+  ========================================================== */
+
+  function saveHistory() {
+
+    try {
+
+      const trimmed =
+        messages.slice(
+          -MAX_HISTORY
+        );
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(
+          trimmed
+        )
+      );
+
+    } catch (error) {
+
+      console.warn(
+        "[Fly AI] Could not save history:",
+        error
+      );
+    }
+  }
+
+  function loadHistory() {
+
+    try {
+
+      const raw =
+        localStorage.getItem(
+          STORAGE_KEY
+        );
+
+      if (!raw) {
+        return;
+      }
+
+      const stored =
+        JSON.parse(raw);
+
+      if (
+        !Array.isArray(stored)
+      ) {
+        return;
+      }
+
+      messages =
+        stored.filter(
+          (message) =>
+            message &&
+            (
+              message.role ===
+                "user" ||
+              message.role ===
+                "assistant"
+            ) &&
+            typeof message.content ===
+              "string" &&
+            message.content.trim()
+        );
+
+      if (
+        messages.length > 0
+      ) {
+
+        hideWelcome();
+
+        renderAllMessages();
+
+      } else {
+
+        showWelcome();
+
+      }
+
+    } catch (error) {
+
+      console.warn(
+        "[Fly AI] Could not load history:",
+        error
+      );
+
+      messages = [];
+
+      showWelcome();
+    }
+  }
+
+  /* ==========================================================
+     ERROR
+  ========================================================== */
+
+  function showError(
+    message
+  ) {
+
+    const wrapper =
+      document.createElement(
+        "article"
+      );
+
+    wrapper.className =
+      "message assistant";
+
+    const avatar =
+      document.createElement(
+        "div"
+      );
+
+    avatar.className =
+      "message-avatar";
+
+    avatar.textContent =
+      "🐉";
+
+    const content =
+      document.createElement(
+        "div"
+      );
+
+    content.className =
+      "message-content";
+
+    content.textContent =
+      `⚠️ ${message}`;
+
+    wrapper.appendChild(
+      avatar
+    );
+
+    wrapper.appendChild(
+      content
+    );
+
+    messagesContainer.appendChild(
+      wrapper
+    );
+
+    scrollToBottom();
+  }
+
+  function getErrorMessage(
+    error
+  ) {
+
+    if (
+      error?.name ===
+      "AbortError"
+    ) {
+      return "Response stopped.";
+    }
+
+    if (
+      error instanceof Error &&
+      error.message
+    ) {
+      return error.message;
+    }
+
+    return "Unable to connect to Fly Dragon AI.";
+  }
+
+  /* ==========================================================
+     TEXTAREA AUTO RESIZE
+  ========================================================== */
 
   function autoResize() {
+
     if (!messageInput) {
       return;
     }
@@ -1074,47 +1392,33 @@
 
     messageInput.style.height =
       `${height}px`;
+
+    updateUI();
   }
 
-  /*
-   * ==========================================
-   * SCROLL
-   * ==========================================
-   */
+  /* ==========================================================
+     SCROLL
+  ========================================================== */
 
   function scrollToBottom() {
+
     if (!chatArea) {
       return;
     }
 
     requestAnimationFrame(
       () => {
-        chatArea.scrollTop =
-          chatArea.scrollHeight;
+
+        chatArea.scrollTo({
+          top:
+            chatArea.scrollHeight,
+
+          behavior:
+            "smooth"
+        });
+
       }
     );
   }
 
-  /*
-   * ==========================================
-   * START
-   * ==========================================
-   */
-
-  init();
-
 })();
-
-এখানে আলাদা করে শেষে আর কোনো "fetch()" লিখবে না। "sendMessage()"-এর এই অংশটাই একমাত্র API call:
-
-const response = await fetch("/api/chat", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "text/event-stream"
-  },
-  body: JSON.stringify({
-    messages: conversation
-  })
-});
-
