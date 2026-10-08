@@ -1,5 +1,5 @@
 {
-  "name": "dragon-app",
+  "name": "hello-ai",
   "description": "FLYTRIPVISA Fly 🐉 AI Assistant powered by Cloudflare Workers AI and AI Gateway",
   "cloudflare": {
     "label": "FlyTripVisa Fly AI",
