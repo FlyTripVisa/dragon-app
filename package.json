@@ -1,39 +1,27 @@
 {
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "hello-ai",
-  "description": "FLYTRIPVISA Fly 🐉 AI Assistant powered by Cloudflare Workers AI and AI Gateway",
-  "cloudflare": {
-    "label": "FlyTripVisa Fly AI",
-    "products": [
-      "Workers",
-      "Workers AI",
-      "AI Gateway"
-    ],
-    "categories": [
-      "ai"
-    ],
-    "docs_url": "https://developers.cloudflare.com/workers-ai/",
-    "preview_icon_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/a974bd55-20c6-4656-fa29-1551d43ddc00/public",
-    "preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/65dd8441-89d3-491d-c5a1-0a000d070700/preview",
-    "publish": true
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-30",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "ai": {
+    "binding": "AI"
   },
-  "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.21.3",
-    "@cloudflare/workers-types": "^4.20260702.1",
-    "@types/node": "24.10.1",
-    "@vitest/runner": "4.1.10",
-    "@vitest/snapshot": "4.1.10",
-    "typescript": "5.9.3",
-    "vitest": "4.1.10",
-    "wrangler": "4.127.0"
+  "ai_search": [
+    {
+      "name": "AI Search",
+      "type": "ai_search",
+      "instance_name": "flytripvisa"
+    }
+  ],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
   },
-  "private": true,
-  "scripts": {
-    "cf-typegen": "wrangler types",
-    "check": "tsc --noEmit && wrangler deploy --dry-run",
-    "deploy": "wrangler deploy",
-    "dev": "wrangler dev",
-    "e2e:dev": "wrangler dev --config wrangler.e2e.jsonc",
-    "start": "wrangler dev",
-    "test": "vitest"
+  "observability": {
+    "enabled": true
   }
 }
