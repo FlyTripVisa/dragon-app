@@ -1,0 +1,48 @@
+name: Build OpenClaw Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "openclaw/**"
+      - ".github/workflows/openclaw-image.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/flytripvisa/dragon-app-openclaw
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and Push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./openclaw
+          file: ./openclaw/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
