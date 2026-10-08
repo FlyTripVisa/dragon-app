@@ -3,24 +3,28 @@
   "name": "hello-ai",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-30",
+
   "compatibility_flags": [
     "nodejs_compat"
   ],
+
   "ai": {
     "binding": "AI"
   },
+
   "ai_search": [
     {
-      "name": "AI Search",
-      "type": "ai_search",
+      "binding": "AI_SEARCH",
       "instance_name": "flytripvisa"
     }
   ],
+
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
+
   "observability": {
     "enabled": true
   }
