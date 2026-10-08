@@ -1,9 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "dragon-app",
-  "main": "src/index.ts",
+  "name": "hello-ai",
+  "main": "src/server.ts",
   "compatibility_date": "2026-09-30",
-  "compatibility_flags": ["nodejs_compat"],
+
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
 
   "ai": {
     "binding": "AI"
@@ -49,6 +52,17 @@
   "browser": {
     "binding": "BROWSER"
   },
+
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "flytripvisa-media"
+    },
+    {
+      "binding": "AI_CHAT_BUCKET",
+      "bucket_name": "ai-chat"
+    }
+  ],
 
   "durable_objects": {
     "bindings": [
