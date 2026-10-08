@@ -88,27 +88,3 @@
       }
     ]
   },
-
-  "exports": {
-    "AIAgent": {
-      "type": "durable-object",
-      "storage": "sqlite"
-    },
-    "ChatSession": {
-      "type": "durable-object",
-      "storage": "sqlite"
-    },
-    "RealtimeStream": {
-      "type": "durable-object",
-      "storage": "sqlite"
-    },
-    "UserSession": {
-      "type": "durable-object",
-      "storage": "sqlite"
-    },
-    "PaymentProcessor": {
-      "type": "durable-object",
-      "storage": "sqlite"
-    }
-  }
-}
