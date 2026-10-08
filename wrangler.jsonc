@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
 
-  "name": "dragon-app",
+  "name": "hello-ai",
 
   "main": "src/index.ts",
 
