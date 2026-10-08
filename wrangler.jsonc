@@ -15,6 +15,14 @@
     "binding": "AI"
   },
 
+  "ai_search": [
+    {
+      "name": "AI Search",
+      "type": "ai_search",
+      "instance_name": "flytripvisa"
+    }
+  ],
+
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
@@ -24,4 +32,4 @@
   "observability": {
     "enabled": true
   }
-}
+};
