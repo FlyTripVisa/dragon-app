@@ -1,27 +1,20 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "hello-ai",
-  "main": "src/index.ts",
-  "compatibility_date": "2026-09-30",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
-  "ai": {
-    "binding": "AI"
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
   },
-  "ai_search": [
-    {
-      "name": "AI Search",
-      "type": "ai_search",
-      "instance_name": "flytripvisa"
-    }
-  ],
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
-  },
-  "observability": {
-    "enabled": true
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.21.3",
+    "@cloudflare/workers-types": "^4.20260702.1",
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.127.0"
   }
 }
