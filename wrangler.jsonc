@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "hello-ai",
-  "main": "src/server.ts",
+  "main": "src/index.ts",
   "compatibility_date": "2026-09-30",
 
   "compatibility_flags": [
@@ -87,28 +87,5 @@
         "class_name": "PaymentProcessor"
       }
     ]
-  },
-
-  "exports": {
-    "AIAgent": {
-      "type": "durable-object",
-      "storage": "sqlite"
-    },
-    "ChatSession": {
-      "type": "durable-object",
-      "storage": "sqlite"
-    },
-    "RealtimeStream": {
-      "type": "durable-object",
-      "storage": "sqlite"
-    },
-    "UserSession": {
-      "type": "durable-object",
-      "storage": "sqlite"
-    },
-    "PaymentProcessor": {
-      "type": "durable-object",
-      "storage": "sqlite"
-    }
   }
 }
