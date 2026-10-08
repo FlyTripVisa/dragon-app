@@ -3,14 +3,8 @@
   "name": "dragon-app",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-30",
+  "compatibility_flags": ["nodejs_compat"],
 
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
-
-  // ─────────────────────────────────────────
-  // 🤖 AI & AI SEARCH
-  // ─────────────────────────────────────────
   "ai": {
     "binding": "AI"
   },
@@ -22,16 +16,16 @@
     }
   ],
 
-  // ─────────────────────────────────────────
-  // 🌐 BROWSER
-  // ─────────────────────────────────────────
-  "browser": {
-    "binding": "BROWSER"
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
   },
 
-  // ─────────────────────────────────────────
-  // 📦 D1 DATABASES
-  // ─────────────────────────────────────────
+  "observability": {
+    "enabled": true
+  },
+
   "d1_databases": [
     {
       "binding": "DB",
@@ -45,9 +39,6 @@
     }
   ],
 
-  // ─────────────────────────────────────────
-  // 🗂️ KV NAMESPACES
-  // ─────────────────────────────────────────
   "kv_namespaces": [
     {
       "binding": "KV_BINDING",
@@ -55,9 +46,10 @@
     }
   ],
 
-  // ─────────────────────────────────────────
-  // 🏗️ DURABLE OBJECTS
-  // ─────────────────────────────────────────
+  "browser": {
+    "binding": "BROWSER"
+  },
+
   "durable_objects": {
     "bindings": [
       {
@@ -83,19 +75,26 @@
     ]
   },
 
-  // ─────────────────────────────────────────
-  // 🎨 STATIC ASSETS
-  // ─────────────────────────────────────────
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
-  },
-
-  // ─────────────────────────────────────────
-  // 📊 OBSERVABILITY
-  // ─────────────────────────────────────────
-  "observability": {
-    "enabled": true
+  "exports": {
+    "AIAgent": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    },
+    "ChatSession": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    },
+    "RealtimeStream": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    },
+    "UserSession": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    },
+    "PaymentProcessor": {
+      "type": "durable-object",
+      "storage": "sqlite"
+    }
   }
 }
