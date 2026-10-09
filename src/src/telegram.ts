@@ -1,4 +1,3 @@
-
 interface TelegramEnv {
   AI: Ai;
   TELEGRAM_BOT_TOKEN?: string;
