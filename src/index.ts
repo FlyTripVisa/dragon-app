@@ -1,3 +1,4 @@
+
 /**
  * ============================================================
  * FLYTRIPVISA
@@ -7,12 +8,15 @@
  * Workers AI
  * AI Gateway
  * SSE Streaming
+ * Admin Dashboard API
  * ============================================================
  */
 
 import type {
   AiTextGenerationInput,
 } from "@cloudflare/workers-types";
+
+import { handleAdminRequest } from "./admin";
 
 /**
  * ============================================================
@@ -69,8 +73,6 @@ const AI_GATEWAY_ID =
 /**
  * Maximum number of messages accepted
  * from the browser.
- *
- * Prevents accidental huge requests.
  */
 const MAX_MESSAGES = 50;
 
@@ -180,7 +182,6 @@ function jsonResponse(
   data: unknown,
   status = 200,
 ): Response {
-
   return new Response(
     JSON.stringify(data),
     {
@@ -212,7 +213,6 @@ function errorResponse(
   message: string,
   status = 500,
 ): Response {
-
   return jsonResponse(
     {
       ok: false,
@@ -231,7 +231,6 @@ function errorResponse(
 function isValidRole(
   role: unknown,
 ): role is ChatRole {
-
   return (
     role === "user" ||
     role === "assistant" ||
@@ -244,33 +243,22 @@ function isValidRole(
  * SANITIZE CHAT
  * ============================================================
  *
- * Important:
- *
- * We do NOT trust a browser supplied system prompt.
- *
- * Any "system" messages sent by the frontend
- * are removed.
- *
- * Our server-side SYSTEM_PROMPT is authoritative.
+ * Browser-supplied system messages are removed.
+ * The server-side SYSTEM_PROMPT remains authoritative.
  * ============================================================
  */
 
 function sanitizeMessages(
   input: unknown,
 ): ChatMessage[] {
-
   if (!Array.isArray(input)) {
     return [];
   }
 
   const result: ChatMessage[] = [];
-
   let totalCharacters = 0;
 
-  for (
-    const item of input
-  ) {
-
+  for (const item of input) {
     if (
       !item ||
       typeof item !== "object"
@@ -281,13 +269,7 @@ function sanitizeMessages(
     const message =
       item as Partial<ChatMessage>;
 
-    /**
-     * Never accept browser-controlled
-     * system messages.
-     */
-    if (
-      message.role === "system"
-    ) {
+    if (message.role === "system") {
       continue;
     }
 
@@ -299,8 +281,7 @@ function sanitizeMessages(
     }
 
     if (
-      typeof message.content !==
-      "string"
+      typeof message.content !== "string"
     ) {
       continue;
     }
@@ -320,8 +301,7 @@ function sanitizeMessages(
     }
 
     if (
-      totalCharacters +
-        content.length >
+      totalCharacters + content.length >
       MAX_TOTAL_CHARS
     ) {
       break;
@@ -332,13 +312,9 @@ function sanitizeMessages(
       content,
     });
 
-    totalCharacters +=
-      content.length;
+    totalCharacters += content.length;
 
-    if (
-      result.length >=
-      MAX_MESSAGES
-    ) {
+    if (result.length >= MAX_MESSAGES) {
       break;
     }
   }
@@ -357,7 +333,6 @@ function createAIInput(
 ): AiTextGenerationInput & {
   stream: true;
 } {
-
   return {
     messages: [
       {
@@ -368,16 +343,8 @@ function createAIInput(
       ...messages,
     ],
 
-    /**
-     * Maximum generated tokens.
-     */
     max_tokens: 1024,
 
-    /**
-     * IMPORTANT:
-     *
-     * This enables real-time streaming.
-     */
     stream: true,
   };
 }
@@ -389,9 +356,7 @@ function createAIInput(
  */
 
 function sseHeaders(): Headers {
-
-  const headers =
-    new Headers();
+  const headers = new Headers();
 
   headers.set(
     "content-type",
@@ -418,17 +383,10 @@ function sseHeaders(): Headers {
     "nosniff",
   );
 
-  const cors =
-    corsHeaders();
+  const cors = corsHeaders();
 
-  for (
-    const [key, value]
-    of Object.entries(cors)
-  ) {
-    headers.set(
-      key,
-      value,
-    );
+  for (const [key, value] of Object.entries(cors)) {
+    headers.set(key, value);
   }
 
   return headers;
@@ -438,22 +396,15 @@ function sseHeaders(): Headers {
  * ============================================================
  * SSE FALLBACK STREAM
  * ============================================================
- *
- * If something fails after the response has started,
- * send an SSE error event instead of corrupting the stream.
- * ============================================================
  */
 
 function createSSEErrorStream(
   message: string,
 ): ReadableStream {
-
-  const encoder =
-    new TextEncoder();
+  const encoder = new TextEncoder();
 
   return new ReadableStream({
     start(controller) {
-
       controller.enqueue(
         encoder.encode(
           `event: error\n` +
@@ -464,9 +415,7 @@ function createSSEErrorStream(
       );
 
       controller.enqueue(
-        encoder.encode(
-          "data: [DONE]\n\n",
-        ),
+        encoder.encode("data: [DONE]\n\n"),
       );
 
       controller.close();
@@ -484,23 +433,14 @@ async function handleChatRequest(
   request: Request,
   env: Env,
 ): Promise<Response> {
-
   /**
-   * ----------------------------------------------------------
-   * Parse JSON
-   * ----------------------------------------------------------
+   * Parse JSON.
    */
-
   let body: ChatRequestBody;
 
   try {
-
-    body =
-      await request.json() as
-        ChatRequestBody;
-
+    body = await request.json() as ChatRequestBody;
   } catch {
-
     return errorResponse(
       "Invalid JSON request body.",
       400,
@@ -508,17 +448,9 @@ async function handleChatRequest(
   }
 
   /**
-   * ----------------------------------------------------------
-   * Validate messages
-   * ----------------------------------------------------------
+   * Validate messages.
    */
-
-  if (
-    !Array.isArray(
-      body.messages,
-    )
-  ) {
-
+  if (!Array.isArray(body.messages)) {
     return errorResponse(
       "messages array is required.",
       400,
@@ -526,20 +458,12 @@ async function handleChatRequest(
   }
 
   /**
-   * ----------------------------------------------------------
-   * Sanitize
-   * ----------------------------------------------------------
+   * Sanitize messages.
    */
-
   const messages =
-    sanitizeMessages(
-      body.messages,
-    );
+    sanitizeMessages(body.messages);
 
-  if (
-    messages.length === 0
-  ) {
-
+  if (messages.length === 0) {
     return errorResponse(
       "At least one valid user or assistant message is required.",
       400,
@@ -547,96 +471,51 @@ async function handleChatRequest(
   }
 
   /**
-   * ----------------------------------------------------------
-   * AI input
-   * ----------------------------------------------------------
+   * Create AI input.
    */
-
   const inputs =
-    createAIInput(
-      messages,
-    );
+    createAIInput(messages);
 
   /**
-   * ----------------------------------------------------------
-   * Logging
-   * ----------------------------------------------------------
+   * Logging.
    */
-
   console.log(
     JSON.stringify({
-      service:
-        "Fly 🐉 AI Assistant",
-
-      model:
-        MODEL_ID,
-
-      gateway:
-        AI_GATEWAY_ID,
-
-      messages:
-        messages.length,
-
-      streaming:
-        true,
-
-      timestamp:
-        new Date().toISOString(),
+      service: "Fly 🐉 AI Assistant",
+      model: MODEL_ID,
+      gateway: AI_GATEWAY_ID,
+      messages: messages.length,
+      streaming: true,
+      timestamp: new Date().toISOString(),
     }),
   );
 
   /**
-   * ----------------------------------------------------------
-   * Workers AI + AI Gateway
-   * ----------------------------------------------------------
+   * Workers AI + AI Gateway.
    *
-   * This is the important part.
-   *
-   * The request is executed through your
-   * AI Gateway "ai_dragon".
-   * ----------------------------------------------------------
+   * Existing model and gateway configuration preserved.
    */
-
   try {
-
     const stream =
-      await env.AI.run<
-        typeof MODEL_ID
-      >(
+      await env.AI.run<typeof MODEL_ID>(
         MODEL_ID,
         inputs,
         {
           gateway: {
-            id:
-              AI_GATEWAY_ID,
-
-            /**
-             * Do not serve cached responses
-             * for live chat.
-             */
+            id: AI_GATEWAY_ID,
             skipCache: true,
           },
         },
       );
 
-    /**
-     * --------------------------------------------------------
-     * Return streaming response
-     * --------------------------------------------------------
-     */
-
     return new Response(
       stream as ReadableStream,
       {
         status: 200,
-
-        headers:
-          sseHeaders(),
+        headers: sseHeaders(),
       },
     );
-
   } catch (error) {
-
     console.error(
       "[Fly AI] Workers AI / Gateway error:",
       error,
@@ -650,17 +529,10 @@ async function handleChatRequest(
     return jsonResponse(
       {
         ok: false,
-
-        error:
-          "AI request failed.",
-
+        error: "AI request failed.",
         message,
-
-        model:
-          MODEL_ID,
-
-        gateway:
-          AI_GATEWAY_ID,
+        model: MODEL_ID,
+        gateway: AI_GATEWAY_ID,
       },
       502,
     );
@@ -674,35 +546,20 @@ async function handleChatRequest(
  */
 
 function handleHealth(): Response {
-
   return jsonResponse({
     ok: true,
-
-    service:
-      "Fly 🐉 AI Assistant",
-
-    provider:
-      "Cloudflare Workers AI",
-
-    gateway:
-      AI_GATEWAY_ID,
-
-    model:
-      MODEL_ID,
-
-    streaming:
-      true,
+    service: "Fly 🐉 AI Assistant",
+    provider: "Cloudflare Workers AI",
+    gateway: AI_GATEWAY_ID,
+    model: MODEL_ID,
+    streaming: true,
 
     endpoints: {
-      chat:
-        "POST /api/chat",
-
-      health:
-        "GET /api/health",
+      chat: "POST /api/chat",
+      health: "GET /api/health",
     },
 
-    timestamp:
-      new Date().toISOString(),
+    timestamp: new Date().toISOString(),
   });
 }
 
@@ -713,40 +570,22 @@ function handleHealth(): Response {
  */
 
 function handleChatInfo(): Response {
-
   return jsonResponse({
     ok: true,
-
-    service:
-      "Fly 🐉 AI Assistant",
-
-    endpoint:
-      "/api/chat",
-
-    method:
-      "POST",
-
-    contentType:
-      "application/json",
-
-    streaming:
-      true,
-
-    protocol:
-      "Server-Sent Events",
-
-    gateway:
-      AI_GATEWAY_ID,
-
-    model:
-      MODEL_ID,
+    service: "Fly 🐉 AI Assistant",
+    endpoint: "/api/chat",
+    method: "POST",
+    contentType: "application/json",
+    streaming: true,
+    protocol: "Server-Sent Events",
+    gateway: AI_GATEWAY_ID,
+    model: MODEL_ID,
 
     example: {
       messages: [
         {
           role: "user",
-          content:
-            "I want to apply for a Japan visa.",
+          content: "I want to apply for a Japan visa.",
         },
       ],
     },
@@ -760,17 +599,32 @@ function handleChatInfo(): Response {
  */
 
 export default {
-
   async fetch(
     request: Request,
     env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
+    const url = new URL(request.url);
 
-    const url =
-      new URL(
-        request.url,
-      );
+    /**
+     * --------------------------------------------------------
+     * ADMIN API INTEGRATION
+     * --------------------------------------------------------
+     *
+     * Handles routes implemented in src/admin.ts,
+     * including login and protected admin endpoints.
+     *
+     * If the request is not an admin route,
+     * continue to the existing Worker handlers.
+     * --------------------------------------------------------
+     */
+
+    const adminResponse =
+      await handleAdminRequest(request, env);
+
+    if (adminResponse) {
+      return adminResponse;
+    }
 
     /**
      * --------------------------------------------------------
@@ -778,18 +632,12 @@ export default {
      * --------------------------------------------------------
      */
 
-    if (
-      request.method ===
-      "OPTIONS"
-    ) {
-
+    if (request.method === "OPTIONS") {
       return new Response(
         null,
         {
           status: 204,
-
-          headers:
-            corsHeaders(),
+          headers: corsHeaders(),
         },
       );
     }
@@ -801,16 +649,10 @@ export default {
      */
 
     if (
-      url.pathname ===
-        "/api/chat" &&
-      request.method ===
-        "POST"
+      url.pathname === "/api/chat" &&
+      request.method === "POST"
     ) {
-
-      return handleChatRequest(
-        request,
-        env,
-      );
+      return handleChatRequest(request, env);
     }
 
     /**
@@ -820,12 +662,9 @@ export default {
      */
 
     if (
-      url.pathname ===
-        "/api/chat" &&
-      request.method ===
-        "GET"
+      url.pathname === "/api/chat" &&
+      request.method === "GET"
     ) {
-
       return handleChatInfo();
     }
 
@@ -836,23 +675,18 @@ export default {
      */
 
     if (
-      url.pathname ===
-        "/api/health" &&
-      request.method ===
-        "GET"
+      url.pathname === "/api/health" &&
+      request.method === "GET"
     ) {
-
       return handleHealth();
     }
 
     /**
      * --------------------------------------------------------
-     * Frontend
+     * FRONTEND ASSETS
      * --------------------------------------------------------
      */
 
-    return env.ASSETS.fetch(
-      request,
-    );
+    return env.ASSETS.fetch(request);
   },
 };
