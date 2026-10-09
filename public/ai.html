@@ -1,428 +1,1859 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
-<title>Fly Dragon AI Chat</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  <meta charset="UTF-8" />
 
-  body {
-    background: #000;
-    color: #e0e0e0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    height: 100vh;
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-    top: 0;
-    left: 0;
-  }
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
 
-  /* Header */
-  .header {
-    padding: 14px 18px;
-    padding-top: max(14px, env(safe-area-inset-top));
-    background: #0a0a0a;
-    border-bottom: 1px solid #1a1a1a;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-    z-index: 10;
-  }
-  .header h1 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #fff;
-  }
-  .status {
-    font-size: 11px;
-    color: #00ff88;
-  }
+  <meta
+    name="theme-color"
+    content="#000000"
+  />
 
-  /* Chat area */
-  .chat {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-  }
+  <title>Fly Dragon AI — FlyTripVisa</title>
 
-  .msg {
-    max-width: 85%;
-    padding: 12px 14px;
-    border-radius: 16px;
-    font-size: 15px;
-    line-height: 1.5;
-    word-wrap: break-word;
-    white-space: pre-wrap;
-    animation: fadeIn 0.2s ease-out;
-  }
+  <meta
+    name="description"
+    content="Fly Dragon AI — Your AI travel and visa assistant by FlyTripVisa."
+  />
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  <style>
+    :root {
+      --bg: #000000;
+      --surface: #0a0a0a;
+      --surface-soft: #141414;
+      --border: #1f1f1f;
+      --border-light: #2a2a2a;
 
-  .msg.user {
-    align-self: flex-end;
-    background: #1a73e8;
-    color: #fff;
-    border-bottom-right-radius: 4px;
-  }
+      --text: #f5f5f5;
+      --muted: #a3a3a3;
 
-  .msg.bot {
-    align-self: flex-start;
-    background: #1a1a1a;
-    color: #d0d0d0;
-    border: 1px solid #2a2a2a;
-    border-bottom-left-radius: 4px;
-  }
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
 
-  .msg.thinking {
-    color: #555;
-    font-style: italic;
-  }
+      --user: #1d4ed8;
+      --assistant: #0f0f0f;
 
-  /* Input wrapper */
-  .input-wrapper {
-    flex-shrink: 0;
-    background: #0a0a0a;
-    border-top: 1px solid #1a1a1a;
-  }
+      --shadow:
+        0 10px 35px rgba(0, 0, 0, 0.8);
 
-  .input-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
-  }
+      --radius: 20px;
+    }
 
-  /* Input pill — contains attach + text + voice */
-  .input-pill {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    border-radius: 24px;
-    padding: 4px 4px 4px 4px;
-    min-height: 44px;
-    transition: border-color 0.15s;
-  }
-  .input-pill:focus-within {
-    border-color: #1a73e8;
-  }
+    * {
+      box-sizing: border-box;
+    }
 
-  /* Small icon buttons INSIDE the pill */
-  .pill-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: none;
-    background: transparent;
-    color: #888;
-    font-size: 18px;
-    cursor: pointer;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    -webkit-tap-highlight-color: transparent;
-    transition: color 0.15s, background 0.15s;
-  }
-  .pill-btn:active {
-    background: #2a2a2a;
-    color: #fff;
-  }
-  .pill-btn.recording {
-    color: #e81a1a;
-    animation: pulse 1s infinite;
-  }
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 
-  /* Text input inside pill */
-  .input-pill input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #fff;
-    font-size: 16px;
-    padding: 0 8px;
-    -webkit-appearance: none;
-    min-width: 0;
-  }
-  .input-pill input::placeholder {
-    color: #555;
-  }
+      color: var(--text);
+      background: #000;
+    }
 
-  /* Send button outside pill */
-  .send-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: #1a73e8;
-    color: #fff;
-    font-size: 16px;
-    cursor: pointer;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    -webkit-tap-highlight-color: transparent;
-    transition: opacity 0.15s;
-  }
-  .send-btn:active {
-    opacity: 0.7;
-  }
-  .send-btn:disabled {
-    opacity: 0.3;
-  }
+    body {
+      overflow: hidden;
+    }
 
-  #file-input {
-    display: none;
-  }
+    button,
+    textarea,
+    input {
+      font: inherit;
+    }
 
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-</style>
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+    }
+
+    /* =========================================================
+       APP
+    ========================================================= */
+
+    .app {
+      width: 100%;
+      height: 100dvh;
+
+      display: flex;
+      flex-direction: column;
+
+      background: #000;
+    }
+
+    /* =========================================================
+       HEADER
+    ========================================================= */
+
+    .header {
+      height: 52px;
+      flex-shrink: 0;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      padding: 0 16px;
+
+      background: #000;
+
+      border-bottom:
+        1px solid #1a1a1a;
+
+      backdrop-filter:
+        blur(16px);
+
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+
+      gap: 8px;
+
+      min-width: 0;
+    }
+
+    .brand-logo {
+      width: 30px;
+      height: 30px;
+
+      flex-shrink: 0;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 9px;
+
+      color: #fff;
+
+      font-size: 15px;
+      font-weight: 900;
+
+      background:
+        linear-gradient(
+          135deg,
+          #ef4444,
+          #2563eb
+        );
+
+      box-shadow:
+        0 4px 12px
+        rgba(37, 99, 235, 0.3);
+    }
+
+    .brand-text {
+      min-width: 0;
+    }
+
+    .brand-name {
+      color: #f5f5f5;
+
+      font-size: 13px;
+      font-weight: 800;
+
+      line-height: 1.1;
+
+      white-space: nowrap;
+    }
+
+    .brand-subtitle {
+      margin-top: 2px;
+
+      color: #737373;
+
+      font-size: 9px;
+
+      white-space: nowrap;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+
+      gap: 7px;
+    }
+
+    .new-chat-btn {
+      border:
+        1px solid #262626;
+
+      background: #0a0a0a;
+
+      color: #f5f5f5;
+
+      padding:
+        6px 10px;
+
+      border-radius: 8px;
+
+      font-size: 12px;
+      font-weight: 650;
+
+      transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    .new-chat-btn:hover {
+      background: #151515;
+      border-color: #333;
+
+      transform:
+        translateY(-1px);
+    }
+
+    .new-chat-btn:active {
+      transform:
+        translateY(0);
+    }
+
+    /* =========================================================
+       CHAT AREA
+    ========================================================= */
+
+    .chat-area {
+      flex: 1;
+      min-height: 0;
+
+      overflow-y: auto;
+
+      scroll-behavior: smooth;
+
+      background: #000;
+
+      -webkit-overflow-scrolling:
+        touch;
+    }
+
+    .chat-area::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-area::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .chat-area::-webkit-scrollbar-thumb {
+      background: #222;
+      border-radius: 999px;
+    }
+
+    .chat-container {
+      width:
+        min(
+          920px,
+          calc(100% - 32px)
+        );
+
+      margin:
+        0 auto;
+
+      padding:
+        42px 0 24px;
+    }
+
+    /* =========================================================
+       WELCOME
+    ========================================================= */
+
+    .welcome {
+      text-align: center;
+
+      padding:
+        32px 12px 30px;
+    }
+
+    .dragon-icon {
+      width: 76px;
+      height: 76px;
+
+      margin:
+        0 auto 20px;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 24px;
+
+      color: #fff;
+
+      font-size: 34px;
+      font-weight: 900;
+
+      background:
+        radial-gradient(
+          circle at 30% 20%,
+          #60a5fa,
+          transparent 35%
+        ),
+        linear-gradient(
+          135deg,
+          #ef4444,
+          #2563eb
+        );
+
+      box-shadow:
+        0 18px 40px
+        rgba(37, 99, 235, 0.25),
+
+        inset 0 0 0 1px
+        rgba(255, 255, 255, 0.1);
+    }
+
+    .welcome h1 {
+      margin: 0;
+
+      color: #f5f5f5;
+
+      font-size:
+        clamp(
+          30px,
+          5vw,
+          46px
+        );
+
+      font-weight: 850;
+
+      letter-spacing:
+        -1.5px;
+
+      line-height: 1.08;
+    }
+
+    .welcome h1 .red {
+      color: #ef4444;
+    }
+
+    .welcome h1 .blue {
+      color: #3b82f6;
+    }
+
+    .welcome p {
+      max-width: 600px;
+
+      margin:
+        14px auto 0;
+
+      color: #a3a3a3;
+
+      font-size: 15px;
+
+      line-height: 1.6;
+    }
+
+    /* =========================================================
+       QUICK PROMPTS
+    ========================================================= */
+
+    .quick-prompts {
+      display: grid;
+
+      grid-template-columns:
+        repeat(
+          2,
+          minmax(0, 1fr)
+        );
+
+      gap: 12px;
+
+      margin:
+        10px 0 30px;
+    }
+
+    .prompt-card {
+      width: 100%;
+
+      border:
+        1px solid #262626;
+
+      background: #0a0a0a;
+
+      border-radius: 16px;
+
+      padding: 16px;
+
+      text-align: left;
+
+      color: #f5f5f5;
+
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease;
+    }
+
+    .prompt-card:hover {
+      transform:
+        translateY(-2px);
+
+      border-color:
+        #3b82f6;
+
+      background:
+        #111;
+
+      box-shadow:
+        0 10px 35px
+        rgba(0, 0, 0, 0.6);
+    }
+
+    .prompt-card:active {
+      transform:
+        translateY(0);
+    }
+
+    .prompt-icon {
+      margin-bottom: 9px;
+
+      font-size: 20px;
+    }
+
+    .prompt-title {
+      color: #f5f5f5;
+
+      font-size: 14px;
+      font-weight: 750;
+    }
+
+    .prompt-description {
+      margin-top: 4px;
+
+      color: #a3a3a3;
+
+      font-size: 12px;
+
+      line-height: 1.4;
+    }
+
+    /* =========================================================
+       MESSAGES
+    ========================================================= */
+
+    #messages {
+      display: flex;
+
+      flex-direction: column;
+
+      gap: 18px;
+    }
+
+    .message {
+      display: flex;
+
+      align-items: flex-start;
+
+      gap: 11px;
+
+      animation:
+        messageIn 0.2s ease;
+    }
+
+    @keyframes messageIn {
+      from {
+        opacity: 0;
+
+        transform:
+          translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+
+        transform:
+          translateY(0);
+      }
+    }
+
+    .message.user {
+      justify-content:
+        flex-end;
+    }
+
+    .message-avatar {
+      width: 34px;
+      height: 34px;
+
+      flex-shrink: 0;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 10px;
+
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .assistant .message-avatar {
+      color: #fff;
+
+      background:
+        linear-gradient(
+          135deg,
+          #ef4444,
+          #2563eb
+        );
+
+      box-shadow:
+        0 4px 12px
+        rgba(37, 99, 235, 0.18);
+    }
+
+    .user .message-avatar {
+      order: 2;
+
+      color: #fff;
+
+      background: #1f1f1f;
+
+      border:
+        1px solid #333;
+    }
+
+    .message-content {
+      max-width:
+        min(
+          78%,
+          720px
+        );
+
+      border-radius: 17px;
+
+      padding:
+        12px 15px;
+
+      font-size: 14px;
+
+      line-height: 1.65;
+
+      white-space:
+        pre-wrap;
+
+      overflow-wrap:
+        anywhere;
+    }
+
+    .assistant .message-content {
+      color: #e5e5e5;
+
+      background:
+        #0f0f0f;
+
+      border:
+        1px solid #262626;
+    }
+
+    .user .message-content {
+      color: #fff;
+
+      background:
+        #1d4ed8;
+
+      border:
+        1px solid #2563eb;
+    }
+
+    /* =========================================================
+       TYPING
+    ========================================================= */
+
+    .typing {
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 4px;
+
+      padding:
+        5px 0;
+    }
+
+    .typing span {
+      width: 6px;
+      height: 6px;
+
+      border-radius: 50%;
+
+      background: #525252;
+
+      animation:
+        typing 1.1s
+        infinite
+        ease-in-out;
+    }
+
+    .typing span:nth-child(2) {
+      animation-delay:
+        0.15s;
+    }
+
+    .typing span:nth-child(3) {
+      animation-delay:
+        0.3s;
+    }
+
+    @keyframes typing {
+      0%,
+      60%,
+      100% {
+        transform:
+          translateY(0);
+
+        opacity: 0.45;
+      }
+
+      30% {
+        transform:
+          translateY(-4px);
+
+        opacity: 1;
+      }
+    }
+
+    /* =========================================================
+       COMPOSER
+    ========================================================= */
+
+    .composer-area {
+      flex-shrink: 0;
+
+      background:
+        linear-gradient(
+          to top,
+          #000 80%,
+          rgba(0, 0, 0, 0)
+        );
+
+      padding:
+        8px 14px 12px;
+    }
+
+    .composer {
+      width:
+        min(
+          920px,
+          100%
+        );
+
+      margin:
+        0 auto;
+    }
+
+    /* =========================================================
+       FILE CHIPS
+    ========================================================= */
+
+    #fileChipContainer {
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap: 6px;
+    }
+
+    .file-chip {
+      display: inline-flex;
+
+      align-items: center;
+
+      gap: 6px;
+
+      max-width: 100%;
+
+      margin-bottom: 6px;
+
+      padding:
+        5px 9px;
+
+      color: #d4d4d4;
+
+      background:
+        #141414;
+
+      border:
+        1px solid #262626;
+
+      border-radius: 8px;
+
+      font-size: 11px;
+    }
+
+    .file-chip span {
+      max-width:
+        260px;
+
+      overflow: hidden;
+
+      text-overflow:
+        ellipsis;
+
+      white-space:
+        nowrap;
+    }
+
+    .file-chip button {
+      flex-shrink: 0;
+
+      padding:
+        0 2px;
+
+      border: 0;
+
+      background:
+        transparent;
+
+      color: #ef4444;
+
+      font-size: 15px;
+
+      line-height: 1;
+    }
+
+    /* =========================================================
+       INPUT BOX
+    ========================================================= */
+
+    .input-box {
+      display: flex;
+
+      align-items:
+        flex-end;
+
+      gap: 8px;
+
+      padding:
+        6px 8px 6px 14px;
+
+      background:
+        #0a0a0a;
+
+      border:
+        1px solid #262626;
+
+      border-radius: 16px;
+
+      box-shadow:
+        0 8px 25px
+        rgba(0, 0, 0, 0.7);
+
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    .input-box:focus-within {
+      border-color:
+        #3b82f6;
+
+      box-shadow:
+        0 8px 25px
+        rgba(0, 0, 0, 0.7),
+
+        0 0 0 3px
+        rgba(37, 99, 235, 0.15);
+    }
+
+    /* =========================================================
+       ICON BUTTON
+    ========================================================= */
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+
+      flex-shrink: 0;
+
+      display: grid;
+      place-items: center;
+
+      border: 0;
+
+      border-radius: 10px;
+
+      background:
+        transparent;
+
+      color:
+        #a3a3a3;
+
+      transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+    }
+
+    .icon-btn:hover:not(:disabled) {
+      background:
+        #1a1a1a;
+
+      color:
+        #f5f5f5;
+    }
+
+    .icon-btn:active:not(:disabled) {
+      transform:
+        scale(0.95);
+    }
+
+    .icon-btn:disabled {
+      opacity:
+        0.35;
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+
+      fill:
+        currentColor;
+    }
+
+    /* =========================================================
+       TEXTAREA
+    ========================================================= */
+
+    #messageInput {
+      width: 100%;
+
+      min-height:
+        24px;
+
+      max-height:
+        140px;
+
+      resize: none;
+
+      outline: none;
+
+      border: 0;
+
+      background:
+        transparent;
+
+      color:
+        #f5f5f5;
+
+      line-height:
+        1.5;
+
+      padding:
+        6px 0;
+
+      font-size:
+        14px;
+
+      overflow-y:
+        auto;
+    }
+
+    #messageInput::placeholder {
+      color:
+        #6b7280;
+    }
+
+    #messageInput:disabled {
+      opacity:
+        0.65;
+    }
+
+    /* =========================================================
+       SEND BUTTON
+    ========================================================= */
+
+    #sendButton {
+      width: 36px;
+      height: 36px;
+
+      flex-shrink: 0;
+
+      display: grid;
+      place-items: center;
+
+      border: 0;
+
+      border-radius: 10px;
+
+      color: #fff;
+
+      background:
+        var(--primary);
+
+      transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        opacity 0.2s ease;
+    }
+
+    #sendButton:hover:not(:disabled) {
+      background:
+        var(--primary-dark);
+
+      transform:
+        translateY(-1px);
+    }
+
+    #sendButton:active:not(:disabled) {
+      transform:
+        translateY(0);
+    }
+
+    #sendButton:disabled {
+      opacity:
+        0.35;
+    }
+
+    #sendButton svg {
+      width: 16px;
+      height: 16px;
+
+      fill:
+        currentColor;
+    }
+
+    /* =========================================================
+       VOICE RECORDING
+    ========================================================= */
+
+    .icon-btn.recording {
+      color:
+        #ef4444;
+
+      background:
+        #1a0a0a;
+
+      animation:
+        pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    /* =========================================================
+       FOOTER NOTE
+    ========================================================= */
+
+    .composer-note {
+      margin-top:
+        6px;
+
+      text-align:
+        center;
+
+      color:
+        #404040;
+
+      font-size:
+        10px;
+
+      line-height:
+        1.4;
+    }
+
+    /* =========================================================
+       HIDDEN
+    ========================================================= */
+
+    .hidden {
+      display:
+        none !important;
+    }
+
+    /* =========================================================
+       MOBILE
+    ========================================================= */
+
+    @media (max-width: 640px) {
+      .header {
+        height:
+          46px;
+
+        padding:
+          0 10px;
+      }
+
+      .brand-logo {
+        width:
+          26px;
+
+        height:
+          26px;
+
+        border-radius:
+          8px;
+
+        font-size:
+          12px;
+      }
+
+      .brand-name {
+        font-size:
+          12px;
+      }
+
+      .brand-subtitle {
+        font-size:
+          8px;
+      }
+
+      .new-chat-btn {
+        padding:
+          5px 8px;
+
+        font-size:
+          11px;
+
+        border-radius:
+          7px;
+      }
+
+      .chat-container {
+        width:
+          calc(100% - 20px);
+
+        padding-top:
+          22px;
+      }
+
+      .welcome {
+        padding:
+          24px 5px 22px;
+      }
+
+      .dragon-icon {
+        width:
+          62px;
+
+        height:
+          62px;
+
+        border-radius:
+          19px;
+
+        font-size:
+          28px;
+      }
+
+      .welcome h1 {
+        font-size:
+          30px;
+      }
+
+      .welcome p {
+        font-size:
+          13px;
+      }
+
+      .quick-prompts {
+        gap:
+          8px;
+      }
+
+      .prompt-card {
+        padding:
+          12px;
+
+        border-radius:
+          14px;
+      }
+
+      .prompt-description {
+        display:
+          none;
+      }
+
+      .message-content {
+        max-width:
+          86%;
+
+        font-size:
+          13px;
+      }
+
+      .composer-area {
+        padding:
+          6px 8px 10px;
+      }
+
+      .input-box {
+        padding:
+          4px 6px 4px 10px;
+
+        border-radius:
+          14px;
+      }
+
+      .icon-btn,
+      #sendButton {
+        width:
+          34px;
+
+        height:
+          34px;
+
+        border-radius:
+          9px;
+      }
+
+      #messageInput {
+        font-size:
+          13px;
+
+        padding:
+          5px 0;
+      }
+
+      .composer-note {
+        font-size:
+          9px;
+      }
+
+      .file-chip span {
+        max-width:
+          180px;
+      }
+    }
+
+    /* =========================================================
+       VERY SMALL DEVICES
+    ========================================================= */
+
+    @media (max-width: 380px) {
+      .brand-subtitle {
+        display:
+          none;
+      }
+
+      .new-chat-btn {
+        font-size:
+          10px;
+      }
+
+      .message-content {
+        max-width:
+          82%;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="header">
-  <h1>Fly 👽 Dragon AI Chat</h1>
-  <span class="status" id="status">Login/Signup</span>
-</div>
+  <div class="app">
 
-<div class="chat" id="chat"></div>
+    <!-- =======================================================
+         HEADER
+    ======================================================== -->
 
-<div class="input-wrapper" id="inputWrapper">
-  <div class="input-bar">
-    <!-- Pill container: attach + input + voice -->
-    <div class="input-pill">
-      <button class="pill-btn" id="attachBtn" title="Attach file">＋</button>
-      <input id="input" type="text" placeholder="Message..." autocomplete="off" enterkeyhint="send" spellcheck="true">
-      <button class="pill-btn" id="voiceBtn" title="Voice input">🎤</button>
-    </div>
-    <button class="send-btn" id="send">➤</button>
+    <header class="header">
+
+      <div class="brand">
+
+        <div
+          class="brand-logo"
+          aria-hidden="true"
+        >
+          🐉
+        </div>
+
+        <div class="brand-text">
+
+          <div class="brand-name">
+            Fly 🐉 AI
+          </div>
+
+          <div class="brand-subtitle">
+            by FlyTripVisa
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="header-actions">
+
+        <button
+          id="newChatButton"
+          class="new-chat-btn"
+          type="button"
+          aria-label="Start a new chat"
+        >
+          + New Chat
+        </button>
+
+      </div>
+
+    </header>
+
+
+    <!-- =======================================================
+         CHAT AREA
+    ======================================================== -->
+
+    <main
+      id="chatArea"
+      class="chat-area"
+    >
+
+      <div class="chat-container">
+
+        <!-- ===================================================
+             WELCOME
+        ==================================================== -->
+
+        <section
+          id="welcome"
+          class="welcome"
+        >
+
+          <div
+            class="dragon-icon"
+            aria-hidden="true"
+          >
+            🐉
+          </div>
+
+          <h1>
+            Welcome to
+            <span class="red">
+              Fly
+            </span>
+            <span class="blue">
+              Dragon AI
+            </span>
+          </h1>
+
+          <p>
+            Your intelligent travel assistant for
+            visa information, flights, hotels
+            and international travel.
+          </p>
+
+        </section>
+
+
+        <!-- =================================================
+             QUICK PROMPTS
+        ================================================== -->
+
+        <section
+          id="quickPrompts"
+          class="quick-prompts"
+          aria-label="Quick prompts"
+        >
+
+          <button
+            class="prompt-card"
+            type="button"
+            data-prompt="Where can I travel from Bangladesh without a visa?"
+          >
+
+            <div class="prompt-icon">
+              🌎
+            </div>
+
+            <div class="prompt-title">
+              Where can I travel?
+            </div>
+
+            <div class="prompt-description">
+              Explore visa-free and visa-on-arrival destinations.
+            </div>
+
+          </button>
+
+
+          <button
+            class="prompt-card"
+            type="button"
+            data-prompt="Tell me about the Japan tourist visa requirements."
+          >
+
+            <div class="prompt-icon">
+              🇯🇵
+            </div>
+
+            <div class="prompt-title">
+              Check Japan Visa
+            </div>
+
+            <div class="prompt-description">
+              Learn about documents and application requirements.
+            </div>
+
+          </button>
+
+
+          <button
+            class="prompt-card"
+            type="button"
+            data-prompt="Help me find a flight for my next international trip."
+          >
+
+            <div class="prompt-icon">
+              ✈️
+            </div>
+
+            <div class="prompt-title">
+              Find Flight
+            </div>
+
+            <div class="prompt-description">
+              Get help planning your international flight.
+            </div>
+
+          </button>
+
+
+          <button
+            class="prompt-card"
+            type="button"
+            data-prompt="Help me find a suitable hotel for my trip."
+          >
+
+            <div class="prompt-icon">
+              🏨
+            </div>
+
+            <div class="prompt-title">
+              Hotel Booking
+            </div>
+
+            <div class="prompt-description">
+              Get recommendations for your destination.
+            </div>
+
+          </button>
+
+        </section>
+
+
+        <!-- =================================================
+             MESSAGES
+        ================================================== -->
+
+        <section
+          id="messages"
+          aria-live="polite"
+          aria-label="Chat messages"
+        ></section>
+
+      </div>
+
+    </main>
+
+
+    <!-- =======================================================
+         COMPOSER
+    ======================================================== -->
+
+    <footer class="composer-area">
+
+      <div class="composer">
+
+        <!-- FILE CHIPS -->
+
+        <div
+          id="fileChipContainer"
+          aria-live="polite"
+        ></div>
+
+
+        <!-- INPUT FORM -->
+
+        <form
+          id="chatForm"
+          class="input-box"
+          autocomplete="off"
+        >
+
+          <!-- FILE BUTTON -->
+
+          <button
+            id="fileButton"
+            class="icon-btn"
+            type="button"
+            aria-label="Attach file"
+            title="Attach file"
+          >
+
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H9v9.5a3.5 3.5 0 0 0 7 0V5a4 4 0 0 0-8 0v12.5c0 3.03 2.47 5.5 5.5 5.5s5.5-2.47 5.5-5.5V6h-1.5z"
+              />
+            </svg>
+
+          </button>
+
+
+          <!-- HIDDEN FILE INPUT -->
+
+          <input
+            id="fileInput"
+            type="file"
+            class="hidden"
+            accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.webp,.csv,.xlsx"
+            multiple
+          />
+
+
+          <!-- TEXT -->
+
+          <textarea
+            id="messageInput"
+            rows="1"
+            maxlength="8000"
+            autocomplete="off"
+            placeholder="Ask Fly Dragon AI anything about travel or visas..."
+            aria-label="Message"
+          ></textarea>
+
+
+          <!-- VOICE -->
+
+          <button
+            id="voiceButton"
+            class="icon-btn"
+            type="button"
+            aria-label="Voice input"
+            title="Voice input"
+          >
+
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"
+              />
+            </svg>
+
+          </button>
+
+
+          <!-- SEND -->
+
+          <button
+            id="sendButton"
+            type="submit"
+            aria-label="Send message"
+            title="Send message"
+          >
+
+            <svg
+              class="send-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"
+              />
+            </svg>
+
+          </button>
+
+        </form>
+
+
+        <div class="composer-note">
+          Fly Dragon AI can make mistakes.
+          Verify important visa and travel information.
+        </div>
+
+      </div>
+
+    </footer>
+
   </div>
-</div>
-
-<input type="file" id="file-input" accept="image/*,.pdf,.txt,.doc,.docx">
-
-<script>
-// ============================================================
-// CONFIGURATION
-// ============================================================
-const CONFIG = {
-  endpoint: "https://gateway.ai.cloudflare.com/v1/PASTE_ACCOUNT_ID_HERE/ai_dragon/openai/chat/completions",
-  apiKey: "PASTE_CLOUDFLARE_API_TOKEN_HERE",
-  model: "gpt-4o-mini",
-  useGateway: true,
-};
-
-// ============================================================
-// DOM
-// ============================================================
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
-const sendBtn = document.getElementById("send");
-const statusEl = document.getElementById("status");
-const attachBtn = document.getElementById("attachBtn");
-const voiceBtn = document.getElementById("voiceBtn");
-const fileInput = document.getElementById("file-input");
-const inputWrapper = document.getElementById("inputWrapper");
-
-// ============================================================
-// KEYBOARD HANDLING
-// ============================================================
-function setupKeyboardHandling() {
-  const visualViewport = window.visualViewport;
-  if (!visualViewport) return;
-
-  function onViewportChange() {
-    const keyboardHeight = window.innerHeight - visualViewport.height;
-    if (keyboardHeight > 100) {
-      inputWrapper.style.position = 'fixed';
-      inputWrapper.style.bottom = keyboardHeight + 'px';
-      inputWrapper.style.left = '0';
-      inputWrapper.style.right = '0';
-      inputWrapper.style.zIndex = '100';
-    } else {
-      inputWrapper.style.position = '';
-      inputWrapper.style.bottom = '';
-      inputWrapper.style.left = '';
-      inputWrapper.style.right = '';
-      inputWrapper.style.zIndex = '';
-    }
-    setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 50);
-  }
-
-  visualViewport.addEventListener('resize', onViewportChange);
-  visualViewport.addEventListener('scroll', onViewportChange);
-}
-
-input.addEventListener('focus', () => {
-  setTimeout(() => { chat.scrollTop = chat.scrollHeight; }, 300);
-});
-
-setupKeyboardHandling();
-
-// ============================================================
-// Chat logic
-// ============================================================
-function addMsg(text, role) {
-  const div = document.createElement("div");
-  div.className = `msg ${role}`;
-  div.textContent = text;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-  return div;
-}
-
-function setStatus(text) {
-  statusEl.textContent = text;
-}
-
-async function sendMessage() {
-  const text = input.value.trim();
-  if (!text) return;
-
-  addMsg(text, "user");
-  input.value = "";
-  sendBtn.disabled = true;
-  setStatus("Thinking...");
-
-  const thinkingEl = addMsg("...", "bot thinking");
-
-  try {
-    const headers = { "Content-Type": "application/json" };
-    if (CONFIG.useGateway) {
-      headers["cf-aig-authorization"] = `Bearer ${CONFIG.apiKey}`;
-    } else {
-      headers["Authorization"] = `Bearer ${CONFIG.apiKey}`;
-    }
-
-    const res = await fetch(CONFIG.endpoint, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        model: CONFIG.model,
-        messages: [{ role: "user", content: text }],
-        max_tokens: 1024,
-      }),
-    });
-
-    const data = await res.json();
-    const reply = data.choices?.[0]?.message?.content
-      || data.response
-      || JSON.stringify(data, null, 2);
-
-    thinkingEl.remove();
-    addMsg(reply, "bot");
-    setStatus("Ready");
-  } catch (err) {
-    thinkingEl.remove();
-    addMsg("Error: " + err.message, "bot");
-    setStatus("Error");
-  }
-
-  sendBtn.disabled = false;
-  input.focus();
-}
-
-// ============================================================
-// Voice
-// ============================================================
-let recognition = null;
-let isRecording = false;
-
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.lang = 'en-US';
-
-  recognition.onresult = (event) => {
-    input.value = event.results[0][0].transcript;
-    voiceBtn.classList.remove('recording');
-    isRecording = false;
-    input.focus();
-  };
-  recognition.onerror = () => {
-    voiceBtn.classList.remove('recording');
-    isRecording = false;
-  };
-  recognition.onend = () => {
-    voiceBtn.classList.remove('recording');
-    isRecording = false;
-  };
-}
-
-voiceBtn.addEventListener('click', () => {
-  if (!recognition) {
-    alert('Voice input not supported in this browser.');
-    return;
-  }
-  if (isRecording) {
-    recognition.stop();
-    voiceBtn.classList.remove('recording');
-    isRecording = false;
-  } else {
-    recognition.start();
-    voiceBtn.classList.add('recording');
-    isRecording = true;
-  }
-});
-
-// ============================================================
-// Attach
-// ============================================================
-attachBtn.addEventListener('click', () => {
-  fileInput.click();
-});
-
-fileInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    addMsg("📎 " + file.name, "user");
-  }
-  fileInput.value = '';
-});
-
-// ============================================================
-// Send
-// ============================================================
-sendBtn.addEventListener("click", sendMessage);
-input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-});
-
-addMsg("Hello! I'm your AI assistant. Type, tap 🎤, or attach a file to get started.", "bot");
-</script>
 
 
-  <script src="/chat.js" defer></script>
+  <!-- =========================================================
+       MAIN CHAT LOGIC
+  ========================================================== -->
+
+  <script
+    src="/chat.js"
+    defer
+  ></script>
+
+
+  <!-- =========================================================
+       FILE + VOICE UI
+       Does NOT call /api/chat.
+       chat.js owns the actual chat request.
+  ========================================================== -->
+
+  <script>
+    (() => {
+      "use strict";
+
+      const fileButton =
+        document.getElementById("fileButton");
+
+      const fileInput =
+        document.getElementById("fileInput");
+
+      const fileChipContainer =
+        document.getElementById(
+          "fileChipContainer"
+        );
+
+      const voiceButton =
+        document.getElementById(
+          "voiceButton"
+        );
+
+      const messageInput =
+        document.getElementById(
+          "messageInput"
+        );
+
+      let selectedFiles = [];
+
+      /* =====================================================
+         FILE UPLOAD UI
+      ====================================================== */
+
+      if (fileButton && fileInput) {
+        fileButton.addEventListener(
+          "click",
+          () => {
+            fileInput.click();
+          }
+        );
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener(
+          "change",
+          () => {
+            selectedFiles =
+              Array.from(
+                fileInput.files || []
+              );
+
+            renderFileChips();
+          }
+        );
+      }
+
+      function renderFileChips() {
+        if (!fileChipContainer) {
+          return;
+        }
+
+        fileChipContainer.innerHTML = "";
+
+        selectedFiles.forEach(
+          (file, index) => {
+
+            const chip =
+              document.createElement(
+                "div"
+              );
+
+            chip.className =
+              "file-chip";
+
+            const label =
+              document.createElement(
+                "span"
+              );
+
+            label.textContent =
+              `📎 ${file.name}`;
+
+            const removeButton =
+              document.createElement(
+                "button"
+              );
+
+            removeButton.type =
+              "button";
+
+            removeButton.textContent =
+              "×";
+
+            removeButton.setAttribute(
+              "aria-label",
+              `Remove ${file.name}`
+            );
+
+            removeButton.addEventListener(
+              "click",
+              () => {
+                selectedFiles.splice(
+                  index,
+                  1
+                );
+
+                rebuildFileInput();
+                renderFileChips();
+              }
+            );
+
+            chip.appendChild(label);
+            chip.appendChild(
+              removeButton
+            );
+
+            fileChipContainer.appendChild(
+              chip
+            );
+          }
+        );
+      }
+
+      /*
+       * FileList is read-only.
+       * Rebuild the input after removing a file.
+       */
+
+      function rebuildFileInput() {
+        if (!fileInput) {
+          return;
+        }
+
+        const dataTransfer =
+          new DataTransfer();
+
+        selectedFiles.forEach(
+          (file) => {
+            dataTransfer.items.add(
+              file
+            );
+          }
+        );
+
+        fileInput.files =
+          dataTransfer.files;
+      }
+
+      /* =====================================================
+         VOICE INPUT
+      ====================================================== */
+
+      let recognition = null;
+
+      let isRecording = false;
+
+      const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+      if (
+        SpeechRecognition &&
+        voiceButton
+      ) {
+        recognition =
+          new SpeechRecognition();
+
+        recognition.continuous =
+          false;
+
+        recognition.interimResults =
+          false;
+
+        recognition.lang =
+          "en-US";
+
+        recognition.onstart =
+          () => {
+            isRecording = true;
+
+            voiceButton.classList.add(
+              "recording"
+            );
+
+            voiceButton.setAttribute(
+              "aria-label",
+              "Stop voice input"
+            );
+
+            voiceButton.setAttribute(
+              "title",
+              "Stop voice input"
+            );
+          };
+
+        recognition.onresult =
+          (event) => {
+            const transcript =
+              event
+                .results?.[0]?.[0]
+                ?.transcript || "";
+
+            if (!transcript) {
+              return;
+            }
+
+            if (
+              messageInput.value.trim()
+            ) {
+              messageInput.value +=
+                " ";
+            }
+
+            messageInput.value +=
+              transcript;
+
+            messageInput.dispatchEvent(
+              new Event(
+                "input",
+                {
+                  bubbles: true
+                }
+              )
+            );
+
+            messageInput.focus();
+          };
+
+        recognition.onerror =
+          (event) => {
+            console.warn(
+              "Fly AI speech recognition error:",
+              event.error
+            );
+
+            stopRecording();
+          };
+
+        recognition.onend =
+          () => {
+            stopRecording();
+          };
+
+      } else if (voiceButton) {
+
+        voiceButton.disabled =
+          true;
+
+        voiceButton.setAttribute(
+          "title",
+          "Voice input is not supported in this browser"
+        );
+
+        voiceButton.setAttribute(
+          "aria-label",
+          "Voice input is not supported"
+        );
+      }
+
+      function startRecording() {
+        if (
+          !recognition ||
+          isRecording
+        ) {
+          return;
+        }
+
+        try {
+          recognition.start();
+        } catch (error) {
+          console.warn(
+            "Could not start speech recognition:",
+            error
+          );
+        }
+      }
+
+      function stopRecording() {
+        isRecording = false;
+
+        if (voiceButton) {
+          voiceButton.classList.remove(
+            "recording"
+          );
+
+          voiceButton.setAttribute(
+            "aria-label",
+            "Voice input"
+          );
+
+          voiceButton.setAttribute(
+            "title",
+            "Voice input"
+          );
+        }
+      }
+
+      if (voiceButton) {
+        voiceButton.addEventListener(
+          "click",
+          () => {
+
+            if (isRecording) {
+
+              try {
+                recognition.stop();
+              } catch (_) {}
+
+              stopRecording();
+
+            } else {
+
+              startRecording();
+
+            }
+          }
+        );
+      }
+
+      /* =====================================================
+         EXPOSE FILE STATE
+         For future chat.js / upload integration.
+      ====================================================== */
+
+      window.getSelectedFiles =
+        () => [...selectedFiles];
+
+      window.clearSelectedFiles =
+        () => {
+
+          selectedFiles = [];
+
+          if (fileInput) {
+            fileInput.value = "";
+          }
+
+          renderFileChips();
+        };
+
+    })();
+  </script>
+
 </body>
 </html>
