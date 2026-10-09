@@ -1,90 +1,57 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "hello-ai",
-  "main": "src/index.ts",
-  "compatibility_date": "2026-09-30",
-
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
-
-  "ai": {
-    "binding": "AI"
-  },
-
-  "ai_search": [
-    {
-      "binding": "AI_SEARCH",
-      "instance_name": "flytripvisa"
-    }
-  ],
-
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
-  },
-
-  "observability": {
-    "enabled": true
-  },
-
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "flytripvisa-db",
-      "database_id": "f274effd-ff6e-4c75-b8a8-4083726232fe"
-    },
-    {
-      "binding": "DB2",
-      "database_name": "flydb-d1",
-      "database_id": "bc449b24-09b3-4ecd-a599-b78d0127f594"
-    }
-  ],
-
-  "kv_namespaces": [
-    {
-      "binding": "KV_BINDING",
-      "id": "2085403b5d774d1bbd333bcb8ea0d80b"
-    }
-  ],
-
-  "browser": {
-    "binding": "BROWSER"
-  },
-
-  "r2_buckets": [
-    {
-      "binding": "BUCKET",
-      "bucket_name": "flytripvisa-media"
-    },
-    {
-      "binding": "AI_CHAT_BUCKET",
-      "bucket_name": "ai-chat"
-    }
-  ],
-
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "AIAgent",
-        "class_name": "AIAgent"
-      },
-      {
-        "name": "ChatSession",
-        "class_name": "ChatSession"
-      },
-      {
-        "name": "RealtimeStream",
-        "class_name": "RealtimeStream"
-      },
-      {
-        "name": "UserSession",
-        "class_name": "UserSession"
-      },
-      {
-        "name": "PaymentProcessor",
-        "class_name": "PaymentProcessor"
-      }
-    ]
-  },
+"$schema": "node_modules/wrangler/config-schema.json",
+"name": "hello-ai",
+"main": "src/index.ts",
+"compatibility_date": "2026-09-30",
+"compatibility_flags": [
+"nodejs_compat"
+],
+"ai": {
+"binding": "AI"
+},
+"ai_search": [
+{
+"binding": "AI_SEARCH",
+"instance_name": "flytripvisa"
+}
+],
+"assets": {
+"directory": "./public",
+"binding": "ASSETS",
+"not_found_handling": "single-page-application"
+},
+"observability": {
+"enabled": true
+},
+"d1_databases": [
+{
+"binding": "DB",
+"database_name": "flytripvisa-db",
+"database_id": "f274effd-ff6e-4c75-b8a8-4083726232fe"
+},
+{
+"binding": "DB2",
+"database_name": "flydb-d1",
+"database_id": "bc449b24-09b3-4ecd-a599-b78d0127f594"
+}
+],
+"kv_namespaces": [
+{
+"binding": "KV_BINDING",
+"id": "2085403b5d774d1bbd333bcb8ea0d80b"
+}
+],
+"browser": {
+"binding": "BROWSER"
+},
+"r2_buckets": [
+{
+"binding": "BUCKET",
+"bucket_name": "flytripvisa-media"
+},
+{
+"binding": "AI_CHAT_BUCKET",
+"bucket_name": "ai-chat"
+}
+]
+}
