@@ -1,0 +1,590 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FlyTripVisa AI — Admin</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg:#09090b; --panel:#111113; --panel2:#18181b;
+  --border:#27272a; --text:#fafafa; --muted:#a1a1aa;
+  --accent:#16a34a; --accent-bg:#052e16; --radius:12px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+.layout{min-height:100vh}
+.sidebar{position:fixed;inset:0 auto 0 0;width:248px;background:#0c0c0e;
+border-right:1px solid var(--border);padding:20px 14px;display:flex;
+flex-direction:column;z-index:5;transition:transform .2s}
+.brand{display:flex;align-items:center;gap:11px;padding:3px 8px 24px}
+.brand-icon{width:37px;height:37px;display:grid;place-items:center;
+border-radius:11px;background:#166534;color:#dcfce7;font-weight:800;font-size:17px}
+.brand-name{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.brand-sub{font-size:11px;color:var(--muted)}
+.quick{display:flex;gap:8px;margin:0 4px 23px}
+.btn{border:1px solid var(--border);border-radius:8px;padding:9px 12px;
+background:var(--panel2);color:var(--text);font-weight:500}
+.btn:hover{background:#27272a}
+.btn-primary{background:#16a34a;border-color:#16a34a;color:white}
+.btn-primary:hover{background:#15803d}
+.quick .btn{flex:1;font-size:12px;padding:8px 5px}
+.group{margin-bottom:21px}
+.group-label{padding:0 10px 8px;color:#71717a;font-size:10px;
+font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 11px;
+border-radius:8px;color:#a1a1aa;margin:2px 0;cursor:pointer;transition:.15s}
+.nav-item:hover{background:#18181b;color:#fff}
+.nav-item.active{background:#202023;color:#fff;font-weight:600}
+.nav-item.active .nav-icon{color:#4ade80}
+.nav-icon{width:17px;text-align:center;font-size:15px}
+.nav-count{margin-left:auto;font-size:11px;color:#a1a1aa}
+.sidebar-bottom{margin-top:auto;border-top:1px solid var(--border);padding-top:15px}
+.profile{display:flex;align-items:center;gap:10px;padding:10px 7px}
+.avatar{width:34px;height:34px;display:grid;place-items:center;
+border-radius:50%;background:#14532d;color:#bbf7d0;font-weight:700}
+.profile-name{font-size:12px;font-weight:600}
+.profile-sub{font-size:11px;color:var(--muted)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;
+display:inline-block;margin-right:6px}
+.main{margin-left:248px;min-height:100vh}
+.topbar{height:65px;border-bottom:1px solid var(--border);display:flex;
+align-items:center;gap:14px;padding:0 30px;position:sticky;top:0;
+background:#09090bee;backdrop-filter:blur(14px);z-index:3}
+.mobile-menu{display:none}
+.search{flex:1;max-width:420px;position:relative}
+.search input{width:100%;padding:9px 12px 9px 35px;background:#111113;
+border:1px solid var(--border);border-radius:8px;color:white;outline:none}
+.search-icon{position:absolute;left:12px;top:8px;color:#71717a}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:12px}
+.icon-btn{width:35px;height:35px;border:1px solid var(--border);
+border-radius:8px;background:#111113;color:#d4d4d8}
+.top-user{width:31px;height:31px;display:grid;place-items:center;
+border-radius:50%;background:#27272a;font-weight:700}
+.content{max-width:1500px;margin:auto;padding:30px}
+.breadcrumb{font-size:12px;color:var(--muted);margin-bottom:11px}
+.heading{display:flex;align-items:flex-start;justify-content:space-between;
+gap:16px;margin-bottom:25px}
+h1{font-size:26px;letter-spacing:-.8px;margin:0 0 5px;font-weight:700}
+h2{font-size:15px;margin:0;font-weight:600}
+.subtitle{color:var(--muted);font-size:13px}
+.heading-actions{display:flex;gap:9px;flex-wrap:wrap}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:20px}
+.card{background:var(--panel);border:1px solid var(--border);
+border-radius:var(--radius);padding:19px;min-width:0}
+.card-label{font-size:12px;color:#a1a1aa;display:flex;justify-content:space-between;gap:8px}
+.card-value{font-size:27px;font-weight:700;letter-spacing:-.8px;margin:12px 0 5px}
+.card-foot{font-size:11px;color:var(--muted)}
+.green{color:#4ade80}.red{color:#f87171}.muted{color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:20px;
+padding:3px 8px;font-size:11px;background:#27272a;color:#d4d4d8}
+.pill.green-pill{background:#052e16;color:#86efac}
+.pill.yellow{background:#422006;color:#fcd34d}
+.grid-main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(270px,1fr);
+gap:16px;margin-bottom:20px}
+.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;
+margin-bottom:18px}
+.card-desc{font-size:12px;color:var(--muted);margin-top:4px}
+.chart{height:205px;display:flex;align-items:flex-end;gap:13px;
+padding:14px 3px 0;border-bottom:1px solid var(--border)}
+.bar-group{flex:1;height:100%;display:flex;align-items:center;
+justify-content:flex-end;flex-direction:column;gap:8px;min-width:0}
+.bar-pair{height:85%;width:100%;display:flex;align-items:flex-end;
+justify-content:center;gap:4px}
+.bar{width:38%;max-width:28px;border-radius:4px 4px 0 0;background:#166534;
+min-height:4px}
+.bar.alt{background:#3f3f46}
+.bar-label{font-size:10px;color:#a1a1aa}
+.legend{display:flex;gap:16px;margin-top:14px;color:var(--muted);font-size:11px}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.activity-list{display:flex;flex-direction:column;gap:18px}
+.activity{display:flex;gap:11px;align-items:flex-start}
+.activity-icon{width:34px;height:34px;flex-shrink:0;display:grid;
+place-items:center;border:1px solid var(--border);border-radius:9px;background:#18181b}
+.activity-title{font-size:12px;font-weight:600}
+.activity-desc{font-size:11px;color:var(--muted);margin-top:3px}
+.section{margin-bottom:20px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;white-space:nowrap}
+th{text-align:left;color:#a1a1aa;font-weight:500;font-size:11px;
+padding:12px 14px;border-bottom:1px solid var(--border)}
+td{padding:14px;border-bottom:1px solid #202023;font-size:12px}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:#18181b}
+.empty{padding:27px 12px;text-align:center;color:var(--muted);font-size:12px}
+.field{width:100%;padding:10px 12px;border:1px solid var(--border);
+background:#09090b;color:white;border-radius:8px;outline:none}
+.field:focus{border-color:#16a34a}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .field{max-width:300px}
+.panel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;
+gap:12px;padding:14px 0;border-bottom:1px solid var(--border)}
+.setting-row:last-child{border-bottom:0}
+.setting-title{font-size:12px;font-weight:600}
+.setting-desc{font-size:11px;color:var(--muted);margin-top:3px}
+.login-wrap{max-width:400px;margin:9vh auto;padding:0 18px}
+.login-box{background:var(--panel);border:1px solid var(--border);
+border-radius:14px;padding:28px}
+.login-box h1{font-size:23px;margin-bottom:8px}
+.login-box label{display:block;margin:19px 0 7px;font-size:12px;color:#d4d4d8}
+.login-box .btn{width:100%;margin-top:17px}
+.error{color:#f87171;font-size:12px;margin-top:10px}
+.notice{padding:12px 14px;border:1px solid var(--border);border-radius:9px;
+background:#111113;color:#a1a1aa;font-size:12px;margin-bottom:16px}
+.notice strong{color:#e4e4e7}
+.hidden{display:none!important}
+.footer{font-size:11px;color:#71717a;text-align:center;padding:20px}
+@media(max-width:1100px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-main{grid-template-columns:1fr}}
+@media(max-width:720px){
+.sidebar{transform:translateX(-100%);box-shadow:none}
+.sidebar.open{transform:translateX(0);box-shadow:20px 0 50px #0008}
+.main{margin-left:0}.mobile-menu{display:block}
+.topbar{padding:0 14px}.content{padding:22px 14px}
+h1{font-size:23px}.heading{flex-direction:column}
+.cards{gap:10px}.card{padding:14px}.card-value{font-size:23px}
+.panel-grid{grid-template-columns:1fr}.top-actions{gap:7px}
+}
+@media(max-width:390px){.cards{grid-template-columns:1fr 1fr}.card-value{font-size:21px}}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="login-wrap hidden">
+  <div class="brand" style="padding:0 0 22px">
+    <div class="brand-icon">F</div>
+    <div><div class="brand-name">FlyTripVisa AI</div><div class="brand-sub">Administration Console</div></div>
+  </div>
+  <form id="loginForm" class="login-box">
+    <h1>Welcome back</h1>
+    <div class="subtitle">Sign in to manage your AI platform.</div>
+    <label for="password">Admin password</label>
+    <input class="field" id="password" type="password" autocomplete="current-password" required>
+    <button class="btn btn-primary" id="loginButton" type="submit">Sign in securely</button>
+    <div id="loginError" class="error"></div>
+  </form>
+</div>
+
+<div id="app" class="layout hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-icon">F</div>
+      <div><div class="brand-name">FlyTripVisa AI</div><div class="brand-sub">Admin Console</div></div>
+    </div>
+
+    <div class="quick">
+      <button class="btn" id="quickChat">＋ New chat</button>
+      <button class="btn" id="refreshBtn">↻ Refresh</button>
+    </div>
+
+    <div class="group">
+      <div class="group-label">Dashboard</div>
+      <div class="nav-item active" data-page="overview"><span class="nav-icon">▦</span>Overview</div>
+      <div class="nav-item" data-page="analytics"><span class="nav-icon">▥</span>Analytics</div>
+    </div>
+
+    <div class="group">
+      <div class="group-label">AI Platform</div>
+      <div class="nav-item" data-page="chat"><span class="nav-icon">◉</span>Chat Logs</div>
+      <div class="nav-item" data-page="models"><span class="nav-icon">✳</span>Models</div>
+      <div class="nav-item" data-page="search"><span class="nav-icon">⌕</span>AI Search</div>
+    </div>
+
+    <div class="group">
+      <div class="group-label">Management</div>
+      <div class="nav-item" data-page="security"><span class="nav-icon">♢</span>Security</div>
+      <div class="nav-item" data-page="telegram"><span class="nav-icon">➤</span>Telegram</div>
+      <div class="nav-item" data-page="database"><span class="nav-icon">▤</span>Database</div>
+      <div class="nav-item" data-page="settings"><span class="nav-icon">⚙</span>Settings</div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="nav-item" id="logoutBtn"><span class="nav-icon">⇥</span>Sign out</div>
+      <div class="profile">
+        <div class="avatar">F</div>
+        <div><div class="profile-name">FlyTripVisa Admin</div><div class="profile-sub">Administrator</div></div>
+      </div>
+      <div style="padding:0 8px 5px;font-size:11px;color:#71717a">
+        <span class="status-dot"></span>Admin console
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn mobile-menu" id="menuBtn" aria-label="Open navigation">☰</button>
+      <div class="search"><span class="search-icon">⌕</span>
+        <input id="globalSearch" placeholder="Search dashboard..." aria-label="Search dashboard">
+      </div>
+      <div class="top-actions">
+        <span class="pill"><span class="status-dot"></span>Worker</span>
+        <button class="icon-btn" id="topRefresh" aria-label="Refresh">↻</button>
+        <div class="top-user">F</div>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="breadcrumb">FlyTripVisa / Admin / <span id="crumb">Overview</span></div>
+      <div class="heading">
+        <div><h1 id="pageTitle">Overview</h1><div class="subtitle" id="pageSubtitle">Monitor your AI platform and connected services.</div></div>
+        <div class="heading-actions">
+          <button class="btn" id="exportBtn">↓ Export</button>
+          <button class="btn btn-primary" id="headingRefresh">↻ Refresh data</button>
+        </div>
+      </div>
+
+      <div id="alert" class="notice hidden"></div>
+
+      <section id="page-overview">
+        <div class="cards">
+          <div class="card">
+            <div class="card-label">AI Service <span>✳</span></div>
+            <div class="card-value" id="aiValue">Checking…</div>
+            <div class="card-foot" id="aiFoot">Workers AI binding</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Databases <span>▤</span></div>
+            <div class="card-value" id="dbValue">—</div>
+            <div class="card-foot" id="dbFoot">Connection status</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Connected Services <span>⌘</span></div>
+            <div class="card-value" id="serviceValue">—</div>
+            <div class="card-foot">Configured bindings and integrations</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Telegram <span>➤</span></div>
+            <div class="card-value" id="telegramValue">—</div>
+            <div class="card-foot" id="telegramFoot">Bot configuration</div>
+          </div>
+        </div>
+
+        <div class="grid-main">
+          <div class="card">
+            <div class="card-head"><div><h2>Platform activity</h2><div class="card-desc">Activity chart placeholder</div></div><span class="pill">Overview</span></div>
+            <div class="chart" aria-label="Illustrative activity chart">
+              <div class="bar-group"><div class="bar-pair"><div class="bar" style="height:32%"></div><div class="bar alt" style="height:45%"></div></div><div class="bar-label">Mon</div></div>
+              <div class="bar-group"><div class="bar-pair"><div class="bar" style="height:52%"></div><div class="bar alt" style="height:37%"></div></div><div class="bar-label">Tue</div></div>
+              <div class="bar-group"><div class="bar-pair"><div class="bar" style="height:43%"></div><div class="bar alt" style="height:60%"></div></div><div class="bar-label">Wed</div></div>
+              <div class="bar-group"><div class="bar-pair"><div class="bar" style="height:72%"></div><div class="bar alt" style="height:49%"></div></div><div class="bar-label">Thu</div></div>
+              <div class="bar-group"><div class="bar-pair"><div class="bar" style="height:57%"></div><div class="bar alt" style="height:75%"></div></div><div class="bar-label">Fri</div></div>
+              <div class="bar-group"><div class="bar-pair"><div class="bar" style="height:86%"></div><div class="bar alt" style="height:64%"></div></div><div class="bar-label">Sat</div></div>
+              <div class="bar-group"><div class="bar-pair"><div class="bar" style="height:65%"></div><div class="bar alt" style="height:50%"></div></div><div class="bar-label">Sun</div></div>
+            </div>
+            <div class="legend"><span><i style="background:#166534"></i>AI requests</span><span><i style="background:#3f3f46"></i>Conversations</span></div>
+            <div class="card-desc" style="margin-top:12px">Illustrative design only. Connect request logging to display real usage metrics.</div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div><h2>System status</h2><div class="card-desc">Configured service health</div></div><span class="pill green-pill">Live check</span></div>
+            <div class="activity-list" id="serviceList">
+              <div class="activity"><div class="activity-icon">◌</div><div><div class="activity-title">Loading services…</div><div class="activity-desc">Checking Worker configuration</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card section">
+          <div class="card-head"><div><h2>Database inventory</h2><div class="card-desc">Tables discovered in connected databases</div></div><button class="btn" data-goto="database">View databases ↗</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Database</th><th>Connection</th><th>Tables discovered</th><th>Status</th></tr></thead><tbody id="dbRows"><tr><td colspan="4" class="empty">Loading database status…</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="page-analytics" class="hidden">
+        <div class="notice"><strong>Analytics is not connected yet.</strong> This page does not fabricate request counts or token usage. Add server-side request logging and an analytics query to display real metrics.</div>
+        <div class="cards">
+          <div class="card"><div class="card-label">Total requests</div><div class="card-value">—</div><div class="card-foot">Requires event logging</div></div>
+          <div class="card"><div class="card-label">Tokens consumed</div><div class="card-value">—</div><div class="card-foot">Requires model usage records</div></div>
+          <div class="card"><div class="card-label">Avg. response time</div><div class="card-value">—</div><div class="card-foot">Requires latency tracking</div></div>
+          <div class="card"><div class="card-label">Error rate</div><div class="card-value">—</div><div class="card-foot">Requires request logs</div></div>
+        </div>
+      </section>
+
+      <section id="page-chat" class="hidden">
+        <div class="notice"><strong>Chat logs are not connected.</strong> The current chat endpoint must save conversation events before this page can display real messages.</div>
+        <div class="card"><div class="card-head"><div><h2>Conversation logs</h2><div class="card-desc">Recent AI chat requests</div></div></div>
+          <div class="empty">No chat log API is connected. Existing chat functionality remains unchanged.</div>
+        </div>
+      </section>
+
+      <section id="page-models" class="hidden">
+        <div class="notice">This page shows the model configuration reported by the Worker. Switching models is disabled until a server-side model-selection route is implemented.</div>
+        <div class="card"><div class="card-head"><div><h2>Model configuration</h2><div class="card-desc">Workers AI model information</div></div><span class="pill">Read-only</span></div>
+          <div class="setting-row"><div><div class="setting-title">Configured model</div><div class="setting-desc">Model identifier reported by the admin API</div></div><code id="modelValue">Not reported</code></div>
+          <div class="setting-row"><div><div class="setting-title">Provider</div><div class="setting-desc">AI inference provider</div></div><span class="pill">Cloudflare Workers AI</span></div>
+          <div class="setting-row"><div><div class="setting-title">Model switching</div><div class="setting-desc">Requires a protected server-side configuration endpoint</div></div><span class="pill yellow">Not enabled</span></div>
+        </div>
+      </section>
+
+      <section id="page-search" class="hidden">
+        <div class="notice">AI Search configuration is shown only if the Worker admin API reports its binding. Search and indexing operations are not triggered by this page.</div>
+        <div class="card"><div class="card-head"><div><h2>AI Search</h2><div class="card-desc">Knowledge retrieval service</div></div></div>
+          <div class="setting-row"><div><div class="setting-title">Binding status</div><div class="setting-desc">AI Search binding reported by Worker</div></div><span class="pill" id="searchStatus">Not reported</span></div>
+        </div>
+      </section>
+
+      <section id="page-security" class="hidden">
+        <div class="card"><div class="card-head"><div><h2>Security overview</h2><div class="card-desc">Admin session and authentication</div></div><span class="pill green-pill">Protected API</span></div>
+          <div class="setting-row"><div><div class="setting-title">Admin authentication</div><div class="setting-desc">Password verification occurs on the server</div></div><span class="pill green-pill">Enabled</span></div>
+          <div class="setting-row"><div><div class="setting-title">Session cookie</div><div class="setting-desc">HttpOnly, Secure, SameSite session cookie</div></div><span class="pill green-pill">Configured</span></div>
+          <div class="setting-row"><div><div class="setting-title">Secret management</div><div class="setting-desc">Store ADMIN_PASSWORD and ADMIN_SESSION_SECRET as Worker secrets</div></div><span class="pill">Worker secrets</span></div>
+          <div class="setting-row"><div><div class="setting-title">Public access</div><div class="setting-desc">Protect every admin API route with server-side session verification</div></div><span class="pill yellow">Verify deployment</span></div>
+        </div>
+      </section>
+
+      <section id="page-telegram" class="hidden">
+        <div class="card"><div class="card-head"><div><h2>Telegram integration</h2><div class="card-desc">Bot configuration and webhook status</div></div><button class="btn btn-primary" id="webhookBtn">Check webhook</button></div>
+          <div class="setting-row"><div><div class="setting-title">Bot token</div><div class="setting-desc">Token is never displayed in the browser</div></div><span class="pill" id="botStatus">Checking…</span></div>
+          <div id="webhookResult" class="notice hidden" style="margin-top:16px;white-space:pre-wrap;overflow-wrap:anywhere"></div>
+        </div>
+      </section>
+
+      <section id="page-database" class="hidden">
+        <div class="card"><div class="card-head"><div><h2>Database connections</h2><div class="card-desc">Database connectivity and table discovery</div></div><button class="btn" id="dbRefresh">↻ Refresh</button></div>
+          <div class="table-wrap"><table><thead><tr><th>Database</th><th>Status</th><th>Tables</th></tr></thead><tbody id="dbRowsFull"><tr><td colspan="3" class="empty">Loading…</td></tr></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="page-settings" class="hidden">
+        <div class="card"><div class="card-head"><div><h2>Settings</h2><div class="card-desc">Deployment and configuration information</div></div></div>
+          <div class="setting-row"><div><div class="setting-title">Application</div><div class="setting-desc">FlyTripVisa AI Admin Console</div></div><span>v1.0</span></div>
+          <div class="setting-row"><div><div class="setting-title">Environment</div><div class="setting-desc">Cloudflare Worker deployment</div></div><span class="pill">Production</span></div>
+          <div class="setting-row"><div><div class="setting-title">Health endpoint</div><div class="setting-desc">Worker health-check route</div></div><a class="btn" href="/api/health" target="_blank" rel="noopener">Open ↗</a></div>
+          <div class="setting-row"><div><div class="setting-title">Admin API</div><div class="setting-desc">Protected overview and integration endpoints</div></div><span class="pill">/api/admin/*</span></div>
+        </div>
+      </section>
+      <div class="footer">FlyTripVisa AI · Secure administration · Cloudflare Workers</div>
+    </div>
+  </main>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let overviewData = null;
+let currentPage = "overview";
+
+const pageInfo = {
+  overview:["Overview","Monitor your AI platform and connected services."],
+  analytics:["Analytics","Usage metrics and performance insights."],
+  chat:["Chat Logs","Review AI conversations and request history."],
+  models:["Models","Review the configured AI model."],
+  search:["AI Search","Knowledge retrieval and indexing status."],
+  security:["Security","Authentication and access configuration."],
+  telegram:["Telegram","Bot configuration and webhook status."],
+  database:["Database","Database connectivity and table inventory."],
+  settings:["Settings","Application and deployment configuration."]
+};
+
+function showNotice(message) {
+  $("alert").textContent = message;
+  $("alert").classList.remove("hidden");
+}
+function clearNotice() { $("alert").classList.add("hidden"); }
+
+function navigate(page) {
+  if (!pageInfo[page]) return;
+  currentPage = page;
+  Object.keys(pageInfo).forEach(key => $("page-" + key).classList.toggle("hidden", key !== page));
+  document.querySelectorAll(".nav-item[data-page]").forEach(el =>
+    el.classList.toggle("active", el.dataset.page === page)
+  );
+  $("pageTitle").textContent = pageInfo[page][0];
+  $("pageSubtitle").textContent = pageInfo[page][1];
+  $("crumb").textContent = pageInfo[page][0];
+  $("sidebar").classList.remove("open");
+  if (page === "telegram") checkWebhook();
+}
+
+document.querySelectorAll(".nav-item[data-page]").forEach(el =>
+  el.addEventListener("click", () => navigate(el.dataset.page))
+);
+document.querySelectorAll("[data-goto]").forEach(el =>
+  el.addEventListener("click", () => navigate(el.dataset.goto))
+);
+$("menuBtn").addEventListener("click", () => $("sidebar").classList.toggle("open"));
+$("quickChat").addEventListener("click", () => navigate("chat"));
+$("refreshBtn").addEventListener("click", loadOverview);
+$("topRefresh").addEventListener("click", loadOverview);
+$("headingRefresh").addEventListener("click", loadOverview);
+$("dbRefresh").addEventListener("click", loadOverview);
+$("exportBtn").addEventListener("click", () => {
+  const rows = overviewData?.databases || [];
+  const csv = ["Database,Status,Tables", ...rows.map(db =>
+    [db.name, db.ok ? "Connected" : "Unavailable", (db.tables || []).join(";")]
+      .map(value => '"' + String(value ?? "").replace(/"/g,'""') + '"').join(",")
+  )].join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "flytripvisa-databases.csv"; a.click();
+  URL.revokeObjectURL(url);
+});
+$("globalSearch").addEventListener("keydown", event => {
+  if (event.key !== "Enter") return;
+  const query = event.target.value.trim().toLowerCase();
+  const match = Object.entries(pageInfo).find(([key, info]) =>
+    key.includes(query) || info[0].toLowerCase().includes(query)
+  );
+  if (match) navigate(match[0]);
+});
+$("webhookBtn").addEventListener("click", checkWebhook);
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    credentials:"same-origin",
+    cache:"no-store",
+    ...options,
+    headers: {"Content-Type":"application/json", ...(options.headers || {})}
+  });
+  const data = await response.json().catch(() => ({}));
+  if (response.status === 401) {
+    showLogin();
+    throw new Error("Session expired. Please sign in again.");
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || data.message || "Request failed (" + response.status + ")");
+  }
+  return data;
+}
+
+function showLogin() {
+  $("app").classList.add("hidden");
+  $("loginView").classList.remove("hidden");
+}
+function showApp() {
+  $("loginView").classList.add("hidden");
+  $("app").classList.remove("hidden");
+}
+
+$("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  $("loginError").textContent = "";
+  $("loginButton").disabled = true;
+  $("loginButton").textContent = "Signing in…";
+  try {
+    await api("/api/admin/login", {
+      method:"POST",
+      body:JSON.stringify({password:$("password").value})
+    });
+    $("password").value = "";
+    showApp();
+    await loadOverview();
+  } catch (error) {
+    $("loginError").textContent = error.message || "Sign-in failed.";
+  } finally {
+    $("loginButton").disabled = false;
+    $("loginButton").textContent = "Sign in securely";
+  }
+});
+
+$("logoutBtn").addEventListener("click", async () => {
+  try { await api("/api/admin/logout", {method:"POST", body:"{}"}); } catch {}
+  showLogin();
+});
+
+function setPill(id, label, good) {
+  const el = $(id);
+  el.textContent = label;
+  el.className = "pill " + (good ? "green-pill" : "");
+}
+
+function renderDatabases(databases) {
+  const list = Array.isArray(databases) ? databases : [];
+  const rows = list.map(db => {
+    const tables = Array.isArray(db.tables) ? db.tables : [];
+    const status = db.ok ? '<span class="pill green-pill">Connected</span>' :
+      '<span class="pill yellow">Unavailable</span>';
+    return `<tr><td>${escapeHtml(db.name || "Database")}</td><td>${status}</td><td>${tables.length}</td><td>${escapeHtml(tables.slice(0,5).join(", ") || "No tables reported")}</td></tr>`;
+  }).join("");
+  $("dbRows").innerHTML = rows || '<tr><td colspan="4" class="empty">No database details returned by API.</td></tr>';
+
+  $("dbRowsFull").innerHTML = list.map(db => {
+    const tables = Array.isArray(db.tables) ? db.tables : [];
+    return `<tr><td>${escapeHtml(db.name || "Database")}</td><td>${db.ok ? '<span class="pill green-pill">Connected</span>' : '<span class="pill yellow">Unavailable</span>'}</td><td>${escapeHtml(tables.join(", ") || "No tables reported")}</td></tr>`;
+  }).join("") || '<tr><td colspan="3" class="empty">No database details returned by API.</td></tr>';
+}
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[char]);
+}
+
+async function loadOverview() {
+  clearNotice();
+  $("aiValue").textContent = "Checking…";
+  $("dbValue").textContent = "—";
+  try {
+    const data = await api("/api/admin/overview");
+    overviewData = data;
+    const bindings = data.bindings || data.services || {};
+    const databases = data.databases || [];
+    const telegram = data.telegram || {};
+    const bindingValues = Object.values(bindings);
+    const aiAvailable = Boolean(bindings.AI ?? bindings.ai);
+    const connected = bindingValues.filter(Boolean).length;
+
+    $("aiValue").textContent = aiAvailable ? "Ready" : "Check";
+    $("aiFoot").textContent = aiAvailable ? "Workers AI binding reported" : "AI binding not reported";
+    $("dbValue").textContent = databases.filter(db => db.ok).length + " / " + databases.length;
+    $("dbFoot").textContent = databases.length ? "Database connection checks" : "No database details reported";
+    $("serviceValue").textContent = String(connected);
+    $("telegramValue").textContent = telegram.configured ? "Ready" :
+      (data.telegramConfigured ? "Ready" : "Setup");
+    $("telegramFoot").textContent = telegram.configured || data.telegramConfigured ?
+      "Bot token configured" : "Token not reported as configured";
+
+    $("modelValue").textContent = data.model || data.modelId || "Configured in Worker source";
+    $("searchStatus").textContent = bindings.AI_SEARCH || bindings.AI_SEARCH_BINDING ?
+      "Configured" : "Not reported";
+    setPill("botStatus", telegram.configured || data.telegramConfigured ? "Configured" : "Not configured",
+      Boolean(telegram.configured || data.telegramConfigured));
+
+    const services = [
+      ["Workers AI", Boolean(bindings.AI ?? bindings.ai)],
+      ["D1 Database", databases.some(db => db.ok)],
+      ["Telegram Bot", Boolean(telegram.configured || data.telegramConfigured)],
+      ["AI Search", Boolean(bindings.AI_SEARCH ?? bindings.AI_SEARCH_BINDING)],
+      ["R2 Storage", Boolean(bindings.BUCKET ?? bindings.R2 ?? bindings.AI_CHAT_BUCKET)],
+      ["KV Storage", Boolean(bindings.KV_BINDING ?? bindings.KV)]
+    ];
+    $("serviceList").innerHTML = services.map(([name, ok]) =>
+      `<div class="activity"><div class="activity-icon">${ok ? "✓" : "○"}</div><div><div class="activity-title">${escapeHtml(name)}</div><div class="activity-desc">${ok ? "Reported as configured" : "Not reported by admin API"}</div></div><span class="pill ${ok ? "green-pill" : ""}" style="margin-left:auto">${ok ? "Ready" : "—"}</span></div>`
+    ).join("");
+
+    renderDatabases(databases);
+    if (data.note) showNotice(data.note);
+  } catch (error) {
+    if (!error.message?.includes("sign in")) showNotice("Could not load overview: " + error.message);
+  }
+}
+
+async function checkWebhook() {
+  $("webhookResult").classList.remove("hidden");
+  $("webhookResult").textContent = "Checking Telegram webhook…";
+  try {
+    const data = await api("/api/admin/telegram/webhook-info");
+    const result = data.result || data.webhook || data;
+    $("webhookResult").textContent = JSON.stringify(result, null, 2);
+  } catch (error) {
+    $("webhookResult").textContent = "Webhook check unavailable: " + error.message;
+  }
+}
+
+async function init() {
+  try {
+    await api("/api/admin/me");
+    showApp();
+    await loadOverview();
+  } catch {
+    showLogin();
+  }
+}
+init();
+</script>
+</body>
+</html>
