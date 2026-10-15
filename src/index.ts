@@ -648,9 +648,6 @@ export default {
       const pathname =
         url.pathname.replace(/\/+$/, "") || "/";
 
-      const hostname =
-        url.hostname.toLowerCase();
-
       const isMobile =
         hostname === "m.flytripvisa.site";
 
