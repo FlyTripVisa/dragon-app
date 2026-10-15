@@ -24,7 +24,8 @@ interface Env {
 
 /**
  * PAGE ROUTES
- */
+/*
+/**
 const PAGE_ROUTES: Record<string, string> = {
   "/": "/index.html",
   "/ai": "/ai.html",
