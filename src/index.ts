@@ -1,4 +1,3 @@
-
 /**
  * ============================================================
  * FLYTRIPVISA
@@ -31,6 +30,35 @@ interface Env {
 
 /**
  * ============================================================
+ * PAGE ROUTES
+ *
+ * URLs are mapped to files inside public/.
+ * ============================================================
+ */
+
+const PAGE_ROUTES: Record<string, string> = {
+  "/": "/index.html",
+  "/ai": "/ai.html",
+  "/about": "/about.html",
+  "/apply": "/apply.html",
+  "/login": "/login/index.html",
+  "/signup": "/signup/index.html",
+  "/privacy": "/privacy.html",
+  "/refund": "/refund.html",
+};
+
+/**
+ * Mobile-specific routes.
+ * Used on m.flytripvisa.site.
+ */
+
+const MOBILE_PAGE_ROUTES: Record<string, string> = {
+  "/": "/mobile/index.html",
+  "/ai": "/mobile/ai.html",
+};
+
+/**
+ * ============================================================
  * CHAT TYPES
  * ============================================================
  */
@@ -55,35 +83,16 @@ interface ChatRequestBody {
  * ============================================================
  */
 
-/**
- * Workers AI model.
- *
- * Keep the provider/model name here.
- * AI Gateway is attached through env.AI.run().
- */
 const MODEL_ID =
   "@cf/meta/llama-3.1-8b-instruct-fp8";
 
-/**
- * Your Cloudflare AI Gateway ID.
- */
 const AI_GATEWAY_ID =
   "ai_dragon";
 
-/**
- * Maximum number of messages accepted
- * from the browser.
- */
 const MAX_MESSAGES = 50;
 
-/**
- * Maximum characters per message.
- */
 const MAX_MESSAGE_LENGTH = 12000;
 
-/**
- * Maximum total conversation characters.
- */
 const MAX_TOTAL_CHARS = 60000;
 
 /**
@@ -160,15 +169,9 @@ Keep responses concise enough for a mobile chat interface.
 function corsHeaders(): HeadersInit {
   return {
     "access-control-allow-origin": "*",
-
-    "access-control-allow-methods":
-      "GET, POST, OPTIONS",
-
-    "access-control-allow-headers":
-      "Content-Type, Accept",
-
-    "access-control-max-age":
-      "86400",
+    "access-control-allow-methods": "GET, POST, OPTIONS",
+    "access-control-allow-headers": "Content-Type, Accept",
+    "access-control-max-age": "86400",
   };
 }
 
@@ -186,17 +189,11 @@ function jsonResponse(
     JSON.stringify(data),
     {
       status,
-
       headers: {
         "content-type":
           "application/json; charset=utf-8",
-
-        "cache-control":
-          "no-store",
-
-        "x-content-type-options":
-          "nosniff",
-
+        "cache-control": "no-store",
+        "x-content-type-options": "nosniff",
         ...corsHeaders(),
       },
     },
@@ -241,10 +238,6 @@ function isValidRole(
 /**
  * ============================================================
  * SANITIZE CHAT
- * ============================================================
- *
- * Browser-supplied system messages are removed.
- * The server-side SYSTEM_PROMPT remains authoritative.
  * ============================================================
  */
 
@@ -339,12 +332,9 @@ function createAIInput(
         role: "system",
         content: SYSTEM_PROMPT,
       },
-
       ...messages,
     ],
-
     max_tokens: 1024,
-
     stream: true,
   };
 }
@@ -433,9 +423,6 @@ async function handleChatRequest(
   request: Request,
   env: Env,
 ): Promise<Response> {
-  /**
-   * Parse JSON.
-   */
   let body: ChatRequestBody;
 
   try {
@@ -447,9 +434,6 @@ async function handleChatRequest(
     );
   }
 
-  /**
-   * Validate messages.
-   */
   if (!Array.isArray(body.messages)) {
     return errorResponse(
       "messages array is required.",
@@ -457,9 +441,6 @@ async function handleChatRequest(
     );
   }
 
-  /**
-   * Sanitize messages.
-   */
   const messages =
     sanitizeMessages(body.messages);
 
@@ -470,15 +451,9 @@ async function handleChatRequest(
     );
   }
 
-  /**
-   * Create AI input.
-   */
   const inputs =
     createAIInput(messages);
 
-  /**
-   * Logging.
-   */
   console.log(
     JSON.stringify({
       service: "Fly 🐉 AI Assistant",
@@ -490,11 +465,6 @@ async function handleChatRequest(
     }),
   );
 
-  /**
-   * Workers AI + AI Gateway.
-   *
-   * Existing model and gateway configuration preserved.
-   */
   try {
     const stream =
       await env.AI.run<typeof MODEL_ID>(
@@ -607,16 +577,7 @@ export default {
     const url = new URL(request.url);
 
     /**
-     * --------------------------------------------------------
      * ADMIN API INTEGRATION
-     * --------------------------------------------------------
-     *
-     * Handles routes implemented in src/admin.ts,
-     * including login and protected admin endpoints.
-     *
-     * If the request is not an admin route,
-     * continue to the existing Worker handlers.
-     * --------------------------------------------------------
      */
 
     const adminResponse =
@@ -627,9 +588,7 @@ export default {
     }
 
     /**
-     * --------------------------------------------------------
      * CORS PREFLIGHT
-     * --------------------------------------------------------
      */
 
     if (request.method === "OPTIONS") {
@@ -643,9 +602,7 @@ export default {
     }
 
     /**
-     * --------------------------------------------------------
      * POST /api/chat
-     * --------------------------------------------------------
      */
 
     if (
@@ -656,9 +613,7 @@ export default {
     }
 
     /**
-     * --------------------------------------------------------
      * GET /api/chat
-     * --------------------------------------------------------
      */
 
     if (
@@ -669,9 +624,7 @@ export default {
     }
 
     /**
-     * --------------------------------------------------------
      * GET /api/health
-     * --------------------------------------------------------
      */
 
     if (
@@ -682,12 +635,45 @@ export default {
     }
 
     /**
-     * --------------------------------------------------------
-     * FRONTEND ASSETS
-     * --------------------------------------------------------
+     * FRONTEND PAGE ROUTING
+     *
+     * Rewrite friendly URLs to files in public/.
+     * API and admin handlers above remain unchanged.
+     */
+
+    if (
+      request.method === "GET" ||
+      request.method === "HEAD"
+    ) {
+      const pathname =
+        url.pathname.replace(/\/+$/, "") || "/";
+
+      const hostname =
+        url.hostname.toLowerCase();
+
+      const isMobile =
+        hostname === "flytripvisa.site";
+
+      const assetPath = isMobile
+        ? MOBILE_PAGE_ROUTES[pathname] ??
+          PAGE_ROUTES[pathname]
+        : PAGE_ROUTES[pathname];
+
+      if (assetPath) {
+        const assetUrl = new URL(request.url);
+
+        assetUrl.pathname = assetPath;
+
+        return env.ASSETS.fetch(
+          new Request(assetUrl, request),
+        );
+      }
+    }
+
+    /**
+     * DEFAULT ASSET FALLBACK
      */
 
     return env.ASSETS.fetch(request);
   },
 };
-
