@@ -11,31 +11,20 @@
  * ============================================================
  */
 
-import type {
-  AiTextGenerationInput,
-} from "@cloudflare/workers-types";
-
+import type { AiTextGenerationInput } from "@cloudflare/workers-types";
 import { handleAdminRequest } from "./admin";
 
 /**
- * ============================================================
  * ENVIRONMENT
- * ============================================================
  */
-
 interface Env {
   AI: Ai;
   ASSETS: Fetcher;
 }
 
 /**
- * ============================================================
  * PAGE ROUTES
- *
- * URLs are mapped to files inside public/.
- * ============================================================
  */
-
 const PAGE_ROUTES: Record<string, string> = {
   "/": "/index.html",
   "/ai": "/ai.html",
@@ -48,25 +37,18 @@ const PAGE_ROUTES: Record<string, string> = {
 };
 
 /**
- * Mobile-specific routes.
- * Used on m.flytripvisa.site.
+ * MOBILE ROUTES
+ * Used on m.flytripvisa.site
  */
-
 const MOBILE_PAGE_ROUTES: Record<string, string> = {
   "/": "/mobile/index.html",
   "/ai": "/mobile/ai.html",
 };
 
 /**
- * ============================================================
  * CHAT TYPES
- * ============================================================
  */
-
-type ChatRole =
-  | "system"
-  | "user"
-  | "assistant";
+type ChatRole = "system" | "user" | "assistant";
 
 interface ChatMessage {
   role: ChatRole;
@@ -78,40 +60,29 @@ interface ChatRequestBody {
 }
 
 /**
- * ============================================================
  * AI CONFIGURATION
- * ============================================================
  */
-
-const MODEL_ID =
-  "@cf/meta/llama-3.1-8b-instruct-fp8";
-
-const AI_GATEWAY_ID =
-  "ai_dragon";
+const MODEL_ID = "@cf/meta/llama-3.1-8b-instruct-fp8";
+const AI_GATEWAY_ID = "ai_dragon";
 
 const MAX_MESSAGES = 50;
-
 const MAX_MESSAGE_LENGTH = 12000;
-
 const MAX_TOTAL_CHARS = 60000;
 
 /**
- * ============================================================
  * SYSTEM PROMPT
- * ============================================================
  */
-
 const SYSTEM_PROMPT = `
-You are Fly 🐉 AI Assistant, the official AI travel and visa assistant for FLYTRIPVISA.
+You are Fly 🐉 AI Assistant, the official AI travel and visa
+assistant for FLYTRIPVISA.
 
 Company:
-FLYTRIPVISA
+FLYTRIPVISA - AI POWERED MINIAPP
 
-Website:
+Official website:
 https://flytripvisa.site/
 
-Your main responsibilities:
-
+Your responsibilities:
 1. Visa assistance
 2. Travel planning
 3. Flight information
@@ -120,18 +91,16 @@ Your main responsibilities:
 6. Supporting document guidance
 7. International travel assistance
 
-You can communicate in:
-
-- English
+Languages:
+- English (default)
 - Bengali
 - Chinese
 - Arabic
 - Vietnamese
 
-Always respond in the language used by the user when practical.
+Respond in the user's language whenever practical.
 
-Be:
-
+Communication style:
 - Professional
 - Friendly
 - Clear
@@ -140,32 +109,34 @@ Be:
 - Mobile-friendly
 
 Important rules:
-
 - Never guarantee visa approval.
-- Never claim to be an embassy, immigration officer, lawyer, airline, or government authority.
-- Never invent visa requirements.
-- Never invent visa fees.
-- Never invent processing times.
-- Never fabricate government policies.
-- When requirements can change, advise the user to verify them with the relevant official embassy, consulate, immigration authority, airline, hotel, or government website.
+- Never claim a 99.5% visa approval rate unless reliable,
+  current evidence verifies that statistic.
+- Explain that visa decisions are made by the relevant authorities.
+- Never claim to be an embassy, immigration officer, lawyer,
+  airline, hotel, or government authority.
+- Never invent visa requirements, fees, processing times,
+  partnerships, or government policies.
+- Recommend official sources when requirements may change.
+- Ask for missing information when necessary.
+- Distinguish general guidance from official requirements.
 
-When the user provides incomplete information, ask for the missing information.
+FLYTRIPVISA SERVICES:
+Explain the company's services using verified information
+from https://flytripvisa.site/ and its official mini-app,
+where available.
 
-For travel questions, provide practical and easy-to-understand guidance.
+The company may serve customers in Asia, the GCC, China,
+Vietnam, and Malaysia. Do not claim specific service coverage,
+partnerships, or guarantees unless verified.
 
-For visa questions, clearly distinguish general guidance from official immigration requirements.
-
-When the user asks about FLYTRIPVISA services, explain them clearly without making promises that cannot be verified.
-
-Keep responses concise enough for a mobile chat interface.
+Never promise an outcome that cannot be confirmed.
+Keep responses concise for mobile chat.
 `;
 
 /**
- * ============================================================
  * CORS
- * ============================================================
  */
-
 function corsHeaders(): HeadersInit {
   return {
     "access-control-allow-origin": "*",
@@ -176,36 +147,26 @@ function corsHeaders(): HeadersInit {
 }
 
 /**
- * ============================================================
  * JSON RESPONSE
- * ============================================================
  */
-
 function jsonResponse(
   data: unknown,
   status = 200,
 ): Response {
-  return new Response(
-    JSON.stringify(data),
-    {
-      status,
-      headers: {
-        "content-type":
-          "application/json; charset=utf-8",
-        "cache-control": "no-store",
-        "x-content-type-options": "nosniff",
-        ...corsHeaders(),
-      },
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      ...corsHeaders(),
     },
-  );
+  });
 }
 
 /**
- * ============================================================
  * ERROR RESPONSE
- * ============================================================
  */
-
 function errorResponse(
   message: string,
   status = 500,
@@ -220,30 +181,9 @@ function errorResponse(
 }
 
 /**
- * ============================================================
- * REQUEST VALIDATION
- * ============================================================
+ * SANITIZE CHAT MESSAGES
  */
-
-function isValidRole(
-  role: unknown,
-): role is ChatRole {
-  return (
-    role === "user" ||
-    role === "assistant" ||
-    role === "system"
-  );
-}
-
-/**
- * ============================================================
- * SANITIZE CHAT
- * ============================================================
- */
-
-function sanitizeMessages(
-  input: unknown,
-): ChatMessage[] {
+function sanitizeMessages(input: unknown): ChatMessage[] {
   if (!Array.isArray(input)) {
     return [];
   }
@@ -252,20 +192,13 @@ function sanitizeMessages(
   let totalCharacters = 0;
 
   for (const item of input) {
-    if (
-      !item ||
-      typeof item !== "object"
-    ) {
+    if (!item || typeof item !== "object") {
       continue;
     }
 
-    const message =
-      item as Partial<ChatMessage>;
+    const message = item as Partial<ChatMessage>;
 
-    if (message.role === "system") {
-      continue;
-    }
-
+    // Never accept a client-supplied system prompt.
     if (
       message.role !== "user" &&
       message.role !== "assistant"
@@ -273,30 +206,17 @@ function sanitizeMessages(
       continue;
     }
 
-    if (
-      typeof message.content !== "string"
-    ) {
+    if (typeof message.content !== "string") {
       continue;
     }
 
-    const content =
-      message.content.trim();
+    const content = message.content.trim();
 
-    if (!content) {
+    if (!content || content.length > MAX_MESSAGE_LENGTH) {
       continue;
     }
 
-    if (
-      content.length >
-      MAX_MESSAGE_LENGTH
-    ) {
-      continue;
-    }
-
-    if (
-      totalCharacters + content.length >
-      MAX_TOTAL_CHARS
-    ) {
+    if (totalCharacters + content.length > MAX_TOTAL_CHARS) {
       break;
     }
 
@@ -316,16 +236,11 @@ function sanitizeMessages(
 }
 
 /**
- * ============================================================
  * CREATE AI INPUT
- * ============================================================
  */
-
 function createAIInput(
   messages: ChatMessage[],
-): AiTextGenerationInput & {
-  stream: true;
-} {
+): AiTextGenerationInput & { stream: true } {
   return {
     messages: [
       {
@@ -340,42 +255,17 @@ function createAIInput(
 }
 
 /**
- * ============================================================
  * SSE HEADERS
- * ============================================================
  */
-
 function sseHeaders(): Headers {
-  const headers = new Headers();
+  const headers = new Headers({
+    "content-type": "text/event-stream; charset=utf-8",
+    "cache-control": "no-cache, no-transform",
+    "x-accel-buffering": "no",
+    "x-content-type-options": "nosniff",
+  });
 
-  headers.set(
-    "content-type",
-    "text/event-stream; charset=utf-8",
-  );
-
-  headers.set(
-    "cache-control",
-    "no-cache, no-transform",
-  );
-
-  headers.set(
-    "connection",
-    "keep-alive",
-  );
-
-  headers.set(
-    "x-accel-buffering",
-    "no",
-  );
-
-  headers.set(
-    "x-content-type-options",
-    "nosniff",
-  );
-
-  const cors = corsHeaders();
-
-  for (const [key, value] of Object.entries(cors)) {
+  for (const [key, value] of Object.entries(corsHeaders())) {
     headers.set(key, value);
   }
 
@@ -383,24 +273,19 @@ function sseHeaders(): Headers {
 }
 
 /**
- * ============================================================
- * SSE FALLBACK STREAM
- * ============================================================
+ * SSE ERROR STREAM
  */
-
 function createSSEErrorStream(
   message: string,
-): ReadableStream {
+): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
 
-  return new ReadableStream({
+  return new ReadableStream<Uint8Array>({
     start(controller) {
       controller.enqueue(
         encoder.encode(
           `event: error\n` +
-          `data: ${JSON.stringify({
-            error: message,
-          })}\n\n`,
+          `data: ${JSON.stringify({ error: message })}\n\n`,
         ),
       );
 
@@ -414,11 +299,8 @@ function createSSEErrorStream(
 }
 
 /**
- * ============================================================
  * POST /api/chat
- * ============================================================
  */
-
 async function handleChatRequest(
   request: Request,
   env: Env,
@@ -428,21 +310,14 @@ async function handleChatRequest(
   try {
     body = await request.json() as ChatRequestBody;
   } catch {
-    return errorResponse(
-      "Invalid JSON request body.",
-      400,
-    );
+    return errorResponse("Invalid JSON request body.", 400);
   }
 
   if (!Array.isArray(body.messages)) {
-    return errorResponse(
-      "messages array is required.",
-      400,
-    );
+    return errorResponse("messages array is required.", 400);
   }
 
-  const messages =
-    sanitizeMessages(body.messages);
+  const messages = sanitizeMessages(body.messages);
 
   if (messages.length === 0) {
     return errorResponse(
@@ -451,8 +326,7 @@ async function handleChatRequest(
     );
   }
 
-  const inputs =
-    createAIInput(messages);
+  const inputs = createAIInput(messages);
 
   console.log(
     JSON.stringify({
@@ -466,43 +340,29 @@ async function handleChatRequest(
   );
 
   try {
-    const stream =
-      await env.AI.run<typeof MODEL_ID>(
-        MODEL_ID,
-        inputs,
-        {
-          gateway: {
-            id: AI_GATEWAY_ID,
-            skipCache: true,
-          },
-        },
-      );
-
-    return new Response(
-      stream as ReadableStream,
+    const stream = await env.AI.run<typeof MODEL_ID>(
+      MODEL_ID,
+      inputs,
       {
-        status: 200,
-        headers: sseHeaders(),
+        gateway: {
+          id: AI_GATEWAY_ID,
+          skipCache: true,
+        },
       },
     );
-  } catch (error) {
-    console.error(
-      "[Fly AI] Workers AI / Gateway error:",
-      error,
-    );
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unknown AI error";
+    return new Response(stream as ReadableStream, {
+      status: 200,
+      headers: sseHeaders(),
+    });
+  } catch (error) {
+    // Keep detailed errors in server logs, not public responses.
+    console.error("[Fly AI] Workers AI / Gateway error:", error);
 
     return jsonResponse(
       {
         ok: false,
-        error: "AI request failed.",
-        message,
-        model: MODEL_ID,
-        gateway: AI_GATEWAY_ID,
+        error: "AI request failed. Please try again later.",
       },
       502,
     );
@@ -510,11 +370,8 @@ async function handleChatRequest(
 }
 
 /**
- * ============================================================
- * HEALTH
- * ============================================================
+ * GET /api/health
  */
-
 function handleHealth(): Response {
   return jsonResponse({
     ok: true,
@@ -523,22 +380,17 @@ function handleHealth(): Response {
     gateway: AI_GATEWAY_ID,
     model: MODEL_ID,
     streaming: true,
-
     endpoints: {
       chat: "POST /api/chat",
       health: "GET /api/health",
     },
-
     timestamp: new Date().toISOString(),
   });
 }
 
 /**
- * ============================================================
- * CHAT INFO
- * ============================================================
+ * GET /api/chat
  */
-
 function handleChatInfo(): Response {
   return jsonResponse({
     ok: true,
@@ -550,7 +402,6 @@ function handleChatInfo(): Response {
     protocol: "Server-Sent Events",
     gateway: AI_GATEWAY_ID,
     model: MODEL_ID,
-
     example: {
       messages: [
         {
@@ -563,48 +414,39 @@ function handleChatInfo(): Response {
 }
 
 /**
- * ============================================================
  * MAIN WORKER
- * ============================================================
  */
-
 export default {
   async fetch(
     request: Request,
     env: Env,
-    ctx: ExecutionContext,
+    _ctx: ExecutionContext,
   ): Promise<Response> {
     const url = new URL(request.url);
+    const hostname = url.hostname.toLowerCase();
 
     /**
-     * ADMIN API INTEGRATION
+     * CORS PREFLIGHT
      */
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders(),
+      });
+    }
 
-    const adminResponse =
-      await handleAdminRequest(request, env);
+    /**
+     * ADMIN API
+     */
+    const adminResponse = await handleAdminRequest(request, env);
 
     if (adminResponse) {
       return adminResponse;
     }
 
     /**
-     * CORS PREFLIGHT
-     */
-
-    if (request.method === "OPTIONS") {
-      return new Response(
-        null,
-        {
-          status: 204,
-          headers: corsHeaders(),
-        },
-      );
-    }
-
-    /**
      * POST /api/chat
      */
-
     if (
       url.pathname === "/api/chat" &&
       request.method === "POST"
@@ -615,7 +457,6 @@ export default {
     /**
      * GET /api/chat
      */
-
     if (
       url.pathname === "/api/chat" &&
       request.method === "GET"
@@ -626,7 +467,6 @@ export default {
     /**
      * GET /api/health
      */
-
     if (
       url.pathname === "/api/health" &&
       request.method === "GET"
@@ -635,12 +475,8 @@ export default {
     }
 
     /**
-     * FRONTEND PAGE ROUTING
-     *
-     * Rewrite friendly URLs to files in public/.
-     * API and admin handlers above remain unchanged.
+     * FRIENDLY PAGE ROUTING
      */
-
     if (
       request.method === "GET" ||
       request.method === "HEAD"
@@ -658,7 +494,6 @@ export default {
 
       if (assetPath) {
         const assetUrl = new URL(request.url);
-
         assetUrl.pathname = assetPath;
 
         return env.ASSETS.fetch(
@@ -670,8 +505,6 @@ export default {
     /**
      * DEFAULT ASSET FALLBACK
      */
-
     return env.ASSETS.fetch(request);
   },
 };
-
