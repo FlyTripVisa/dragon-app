@@ -652,7 +652,7 @@ export default {
         url.hostname.toLowerCase();
 
       const isMobile =
-        hostname === "flytripvisa.site";
+        hostname === "m.flytripvisa.site";
 
       const assetPath = isMobile
         ? MOBILE_PAGE_ROUTES[pathname] ??
