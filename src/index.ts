@@ -682,9 +682,49 @@ export default {
     }
 
     /**
+     * 
+    /**
      * --------------------------------------------------------
-     * FRONTEND ASSETS
+     * FRONTEND PAGE ROUTING
      * --------------------------------------------------------
+     */
+
+    const PAGE_ROUTES: Record<string, string> = {
+      "/": "/index.html",
+      "/ai": "/ai.html",
+      "/about": "/about.html",
+      "/apply": "/apply.html",
+      "/login": "/login/index.html",
+      "/signup": "/signup/index.html",
+      "/privacy": "/privacy.html",
+      "/refund": "/refund.html",
+    };
+
+    if (request.method === "GET" || request.method === "HEAD") {
+      const pathname = url.pathname.replace(/\/+$/, "") || "/";
+
+      const isMobile = url.hostname === "m.flytripvisa.site";
+
+      const mobileRoutes: Record<string, string> = {
+        "/": "/mobile/index.html",
+        "/ai": "/mobile/ai.html",
+      };
+
+      const assetPath = isMobile
+        ? mobileRoutes[pathname] ?? PAGE_ROUTES[pathname]
+        : PAGE_ROUTES[pathname];
+
+      if (assetPath) {
+        const assetUrl = new URL(request.url);
+        assetUrl.pathname = assetPath;
+
+        return env.ASSETS.fetch(
+          new Request(assetUrl, request),
+        );
+      }
+    }
+
+    return env.ASSETS.fetch(request); --------------------------------------------------------
      */
 
     return env.ASSETS.fetch(request);
