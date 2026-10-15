@@ -98,6 +98,31 @@ npm wrangler tail
 └── README.md           # This documentation
 ```
 
+###dragon-app/
+├── public/
+│   ├── index.html
+│   ├── ai.html
+│   ├── about.html
+│   ├── apply.html
+│   ├── privacy.html
+│   ├── refund.html
+│   ├── login/
+│   │   └── index.html
+│   ├── signup/
+│   │   └── index.html
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   └── app.js
+│   └── assets/
+├── src/
+│   ├── index.ts
+│   ├── routes/
+│   └── services/
+├── migrations/
+├── test/
+└── wrangler.jsonc
+
 ## How It Works
 
 ### Backend
